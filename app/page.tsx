@@ -3,7 +3,7 @@
 import { LockClosedIcon, ComputerDesktopIcon, ServerIcon, ShieldCheckIcon, ChartBarIcon, CogIcon, WifiIcon, CloudIcon, PhoneIcon, EnvelopeIcon, XMarkIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import ThemeToggle from '@/components/ThemeToggle'
+import ThemeToggle from '@/components/SafeThemeToggle'
 
 export default function Login() {
   const [email, setEmail] = useState('')
