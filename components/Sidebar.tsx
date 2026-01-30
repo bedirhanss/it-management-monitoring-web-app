@@ -20,7 +20,6 @@ const navigation = [
   { name: 'Tickets', href: '/tickets', icon: TicketIcon },
   { name: 'Monitoring', href: '/monitoring', icon: ComputerDesktopIcon },
   { name: 'Users', href: '/users', icon: UsersIcon },
-  { name: 'Ayarlar', href: '/settings', icon: CogIcon },
 ]
 
 export default function Sidebar() {
@@ -47,7 +46,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:inset-0`}>
+      } lg:static lg:inset-0 flex flex-col`}>
         
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
@@ -82,17 +81,27 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Tema</span>
-            <ThemeToggle />
+        {/* Footer - Settings at bottom */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4 mt-auto space-y-3">
+          {/* User Info */}
+          <div className="px-3 py-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Admin User</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Yönetici</p>
           </div>
           
-          <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
-            Çıkış Yap
-          </button>
+          {/* Settings */}
+          <Link
+            href="/settings"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+              pathname === '/settings'
+                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <CogIcon className="mr-3 h-5 w-5" />
+            Ayarlar
+          </Link>
         </div>
       </div>
     </>

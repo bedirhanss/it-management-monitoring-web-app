@@ -2,6 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
+import ThemeToggle from '@/components/SafeThemeToggle'
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -43,7 +45,10 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
             <div className="lg:hidden"></div> {/* Spacer for mobile */}
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{getPageTitle()}</h2>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Hoşgeldin, Admin</span>
+              <ThemeToggle />
+              <button className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <ArrowRightOnRectangleIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              </button>
             </div>
           </div>
         </header>
