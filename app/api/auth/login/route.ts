@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 import pool from '@/lib/db'
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 
 export async function POST(request: Request) {
   try {
@@ -13,23 +13,22 @@ export async function POST(request: Request) {
 
     // Kullanıcıyı veritabanından bul
     const client = await pool.connect()
-    const result = await client.query('SELECT * FROM users WHERE email = $1', [email])
+    const result = await client.query('SELECT * FROM users WHERE email = $1 AND status = $2', [email, 'active'])
     client.release()
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 401 })
+      return NextResponse.json({ error: 'Geçersiz giriş bilgileri' }, { status: 401 })
     }
 
     const user = result.rows[0]
 
-    // Demo için basit şifre kontrolü (gerçek projede bcrypt kullan)
+    // Şifre kontrolü (demo için basit kontrol + bcrypt)
     const isValidPassword = password === 'demo123' || await bcrypt.compare(password, user.password_hash)
 
     if (!isValidPassword) {
-      return NextResponse.json({ error: 'Geçersiz şifre' }, { status: 401 })
+      return NextResponse.json({ error: 'Geçersiz giriş bilgileri' }, { status: 401 })
     }
 
-    // JWT token oluştur
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'fallback-secret',
@@ -46,18 +45,16 @@ export async function POST(request: Request) {
       }
     })
 
-    // Cookie'ye token ekle
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 86400 // 24 saat
+      maxAge: 86400
     })
 
     return response
 
   } catch (error) {
-    console.error('Login error:', error)
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }

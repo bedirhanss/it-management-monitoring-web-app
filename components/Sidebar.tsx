@@ -16,10 +16,10 @@ import { useState } from 'react'
 import ThemeToggle from '@/components/SafeThemeToggle'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
-  { name: 'Tickets', href: '/tickets', icon: TicketIcon },
-  { name: 'Monitoring', href: '/monitoring', icon: ComputerDesktopIcon },
-  { name: 'Users', href: '/users', icon: UsersIcon },
+  { name: 'Dashboard', href: '/panel/dashboard', icon: ChartBarIcon },
+  { name: 'Tickets', href: '/panel/tickets', icon: TicketIcon },
+  { name: 'Monitoring', href: '/panel/monitoring', icon: ComputerDesktopIcon },
+  { name: 'Users', href: '/panel/users', icon: UsersIcon },
 ]
 
 export default function Sidebar() {
@@ -91,10 +91,10 @@ export default function Sidebar() {
           
           {/* Settings */}
           <Link
-            href="/settings"
+            href="/panel/settings"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-              pathname === '/settings'
+              pathname === '/panel/settings'
                 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}

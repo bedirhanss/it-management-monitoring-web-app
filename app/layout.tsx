@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/lib/theme'
 import { AuthProvider } from '@/lib/auth'
 import DashboardLayout from '@/components/DashboardLayout'
+import ToastProvider from '@/components/ToastProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,13 +18,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="tr">
-      <body className={inter.className}>
+    <html lang="tr" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
-            <DashboardLayout>
-              {children}
-            </DashboardLayout>
+            <ToastProvider>
+              <DashboardLayout>
+                {children}
+              </DashboardLayout>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

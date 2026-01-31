@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData.user)
       }
     } catch (error) {
-      console.error('Auth check failed:', error)
+      // Silent fail
     } finally {
       setLoading(false)
     }
@@ -50,17 +50,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
-
+      
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
-        router.push('/dashboard')
+        window.location.href = '/panel/dashboard'
         return true
       } else {
         return false
       }
     } catch (error) {
-      console.error('Login failed:', error)
       return false
     }
   }
@@ -71,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       router.push('/')
     } catch (error) {
-      console.error('Logout failed:', error)
+      // Silent fail
     }
   }
 

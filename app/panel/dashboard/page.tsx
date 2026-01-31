@@ -2,8 +2,17 @@
 
 import Link from 'next/link'
 import { ChartBarIcon, TicketIcon, ComputerDesktopIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Dashboard() {
+  const toast = useToastContext()
+
+  const handleTestToasts = () => {
+    toast.success('İşlem Başarılı', 'Veriler başarıyla güncellendi')
+    setTimeout(() => toast.info('Bilgi', 'Sistem durumu kontrol ediliyor'), 1000)
+    setTimeout(() => toast.warning('Uyarı', 'Disk alanı %85 dolu'), 2000)
+    setTimeout(() => toast.error('Hata', 'Sunucu bağlantısı kesildi'), 3000)
+  }
   return (
     <>
       {/* Quick stats */}
@@ -83,7 +92,7 @@ export default function Dashboard() {
 
       {/* Quick access cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Link href="/tickets" className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
+        <Link href="/panel/tickets" className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -99,7 +108,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link href="/monitoring" className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
+        <Link href="/panel/monitoring" className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -115,7 +124,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link href="/users" className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
+        <Link href="/panel/users" className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -150,8 +159,14 @@ export default function Dashboard() {
 
       {/* Recent activity */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Son Aktiviteler</h3>
+          <button
+            onClick={handleTestToasts}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Toast Testi
+          </button>
         </div>
         <div className="p-6">
           <div className="space-y-4">

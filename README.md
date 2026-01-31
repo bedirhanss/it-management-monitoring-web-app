@@ -4,6 +4,7 @@ IT Helpdesk ve Monitoring servisi için Next.js tabanlı web uygulaması.
 
 ## Özellikler
 
+- **Landing Page**: Ana sayfa tanıtım sayfası
 - **Dashboard**: Sistem durumu ve istatistikler
 - **Ticket System**: Destek talepleri yönetimi
 - **Monitoring**: Sunucu izleme ve performans takibi
@@ -43,6 +44,7 @@ npm run dev
 
 ```
 ├── app/                 # Next.js App Router
+│   ├── login/           # Giriş sayfası
 │   ├── dashboard/       # Dashboard sayfası
 │   ├── tickets/         # Ticket yönetimi
 │   ├── monitoring/      # Sistem izleme
