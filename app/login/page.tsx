@@ -1,9 +1,10 @@
 'use client'
 
 import { LockClosedIcon, ComputerDesktopIcon, ServerIcon, ShieldCheckIcon, ChartBarIcon, CogIcon, WifiIcon, CloudIcon, PhoneIcon, EnvelopeIcon, XMarkIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth'
 import ThemeToggle from '@/components/SafeThemeToggle'
+import { useSearchParams } from 'next/navigation'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,43 @@ export default function Login() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const isDemo = searchParams.get('demo')
+    if (isDemo === 'true') {
+      setLoading(true)
+      handleDemoLogin()
+    }
+  }, [searchParams])
+
+  const handleDemoLogin = async () => {
+    try {
+      console.log('Demo giriş başlatılıyor...')
+      
+      const response = await fetch('/api/auth/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      console.log('Demo response status:', response.status)
+      const data = await response.json()
+      console.log('Demo response data:', data)
+      
+      if (response.ok && data.success) {
+        console.log('Demo başarılı, yönlendiriliyor...')
+        window.location.href = '/panel/dashboard'
+      } else {
+        console.error('Demo hatası:', data.error)
+        setError('Demo giriş hatası: ' + (data.error || 'Bilinmeyen hata'))
+      }
+    } catch (error) {
+      console.error('Demo fetch hatası:', error)
+      setError('Demo bağlantı hatası')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,14 +81,13 @@ export default function Login() {
       
       if (response.ok) {
         const data = await response.json()
-        setTimeout(() => {
-          location.replace('/panel/dashboard')
-        }, 100)
+        window.location.href = '/panel/dashboard'
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Giriş başarısız')
       }
     } catch (error) {
+      console.error('Login hatası:', error)
       setError('Bağlantı hatası. Lütfen tekrar deneyin.')
     } finally {
       setLoading(false)
@@ -62,6 +99,7 @@ export default function Login() {
       handleSubmit(e as any)
     }
   }
+
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-900">
       {/* Theme Toggle */}
