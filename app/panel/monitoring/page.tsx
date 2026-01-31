@@ -1,24 +1,48 @@
+'use client'
+
 import { ComputerDesktopIcon, ServerIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import SubHeader from '@/components/SubHeader'
 
 export default function Monitoring() {
-  const servers = [
+  const [searchValue, setSearchValue] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('all')
+  
+  const allServers = [
     { name: 'Web Server 01', status: 'online', cpu: 45, memory: 67, disk: 23 },
     { name: 'Database Server', status: 'online', cpu: 78, memory: 89, disk: 45 },
     { name: 'Mail Server', status: 'offline', cpu: 0, memory: 0, disk: 67 },
     { name: 'File Server', status: 'online', cpu: 23, memory: 34, disk: 89 },
   ]
+  
+  // Filtreleme ve arama
+  const filteredServers = allServers.filter(server => {
+    const matchesSearch = server.name.toLowerCase().includes(searchValue.toLowerCase())
+    const matchesFilter = selectedFilter === 'all' || server.status === selectedFilter
+    return matchesSearch && matchesFilter
+  })
+  
+  const filterOptions = [
+    { value: 'online', label: 'Çevrimiçi', count: allServers.filter(s => s.status === 'online').length },
+    { value: 'offline', label: 'Çevrimdışı', count: allServers.filter(s => s.status === 'offline').length },
+  ]
 
   return (
     <>
-      {/* Page header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sistem İzleme</h2>
-        <p className="text-gray-600 dark:text-gray-400">Sunucu performansını izleyin</p>
-      </div>
+      <SubHeader
+        title="Sistem İzleme"
+        description="Sunucu performansını izleyin"
+        searchPlaceholder="Sunucu ara..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        filterOptions={filterOptions}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+      />
 
       {/* Servers grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {servers.map((server, index) => (
+        {filteredServers.map((server, index) => (
           <div key={index} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">

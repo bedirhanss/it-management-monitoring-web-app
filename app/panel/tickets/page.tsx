@@ -1,10 +1,15 @@
 'use client'
 
 import { PlusIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 import Pagination from '@/components/Pagination'
+import SubHeader from '@/components/SubHeader'
 import { usePagination } from '@/lib/usePagination'
 
 export default function Tickets() {
+  const [searchValue, setSearchValue] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('all')
+  
   const allTickets = [
     { id: 1, title: 'Printer sorunu', status: 'Açık', priority: 'Yüksek', created: '2024-01-15' },
     { id: 2, title: 'Email erişim problemi', status: 'İşlemde', priority: 'Orta', created: '2024-01-14' },
@@ -20,6 +25,19 @@ export default function Tickets() {
     { id: 12, title: 'Veritabanı optimizasyonu', status: 'İşlemde', priority: 'Düşük', created: '2024-01-04' },
   ]
   
+  // Filtreleme ve arama
+  const filteredTickets = allTickets.filter(ticket => {
+    const matchesSearch = ticket.title.toLowerCase().includes(searchValue.toLowerCase())
+    const matchesFilter = selectedFilter === 'all' || ticket.status === selectedFilter
+    return matchesSearch && matchesFilter
+  })
+  
+  const filterOptions = [
+    { value: 'Açık', label: 'Açık', count: allTickets.filter(t => t.status === 'Açık').length },
+    { value: 'İşlemde', label: 'İşlemde', count: allTickets.filter(t => t.status === 'İşlemde').length },
+    { value: 'Kapalı', label: 'Kapalı', count: allTickets.filter(t => t.status === 'Kapalı').length },
+  ]
+  
   const {
     currentPage,
     totalPages,
@@ -27,23 +45,27 @@ export default function Tickets() {
     startIndex,
     endIndex,
     handlePageChange
-  } = usePagination({ totalItems: allTickets.length })
+  } = usePagination({ totalItems: filteredTickets.length })
   
-  const tickets = allTickets.slice(startIndex, endIndex)
+  const tickets = filteredTickets.slice(startIndex, endIndex)
 
   return (
     <>
-      {/* Action bar */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Destek Talepleri</h2>
-          <p className="text-gray-600 dark:text-gray-400">Tüm destek taleplerini yönetin</p>
-        </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Yeni Ticket
-        </button>
-      </div>
+      <SubHeader
+        title="Destek Talepleri"
+        description="Tüm destek taleplerini yönetin"
+        searchPlaceholder="Ticket ara..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        filterOptions={filterOptions}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        actionButton={{
+          label: 'Yeni Ticket',
+          icon: PlusIcon,
+          onClick: () => console.log('Yeni ticket oluştur')
+        }}
+      />
 
       {/* Tickets list */}
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
@@ -86,7 +108,7 @@ export default function Tickets() {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={allTickets.length}
+          totalItems={filteredTickets.length}
           itemsPerPage={itemsPerPage}
           onPageChange={handlePageChange}
         />

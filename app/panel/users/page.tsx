@@ -1,10 +1,15 @@
 'use client'
 
 import { UsersIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 import Pagination from '@/components/Pagination'
+import SubHeader from '@/components/SubHeader'
 import { usePagination } from '@/lib/usePagination'
 
 export default function Users() {
+  const [searchValue, setSearchValue] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('all')
+  
   const allUsers = [
     { id: 1, name: 'Ahmet Yılmaz', email: 'ahmet@company.com', role: 'Admin', status: 'Aktif' },
     { id: 2, name: 'Ayşe Demir', email: 'ayse@company.com', role: 'Teknisyen', status: 'Aktif' },
@@ -23,6 +28,20 @@ export default function Users() {
     { id: 15, name: 'Gül Özkan', email: 'gul@company.com', role: 'Teknisyen', status: 'Aktif' },
   ]
   
+  // Filtreleme ve arama
+  const filteredUsers = allUsers.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchValue.toLowerCase()) || 
+                         user.email.toLowerCase().includes(searchValue.toLowerCase())
+    const matchesFilter = selectedFilter === 'all' || user.role === selectedFilter
+    return matchesSearch && matchesFilter
+  })
+  
+  const filterOptions = [
+    { value: 'Admin', label: 'Admin', count: allUsers.filter(u => u.role === 'Admin').length },
+    { value: 'Teknisyen', label: 'Teknisyen', count: allUsers.filter(u => u.role === 'Teknisyen').length },
+    { value: 'Kullanıcı', label: 'Kullanıcı', count: allUsers.filter(u => u.role === 'Kullanıcı').length },
+  ]
+  
   const {
     currentPage,
     totalPages,
@@ -30,23 +49,27 @@ export default function Users() {
     startIndex,
     endIndex,
     handlePageChange
-  } = usePagination({ totalItems: allUsers.length })
+  } = usePagination({ totalItems: filteredUsers.length })
   
-  const users = allUsers.slice(startIndex, endIndex)
+  const users = filteredUsers.slice(startIndex, endIndex)
 
   return (
     <>
-      {/* Action bar */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Kullanıcı Yönetimi</h2>
-          <p className="text-gray-600 dark:text-gray-400">Sistem kullanıcılarını yönetin</p>
-        </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Yeni Kullanıcı
-        </button>
-      </div>
+      <SubHeader
+        title="Kullanıcı Yönetimi"
+        description="Sistem kullanıcılarını yönetin"
+        searchPlaceholder="Kullanıcı ara..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        filterOptions={filterOptions}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        actionButton={{
+          label: 'Yeni Kullanıcı',
+          icon: PlusIcon,
+          onClick: () => console.log('Yeni kullanıcı oluştur')
+        }}
+      />
 
       {/* Users table */}
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
@@ -112,7 +135,7 @@ export default function Users() {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={allUsers.length}
+          totalItems={filteredUsers.length}
           itemsPerPage={itemsPerPage}
           onPageChange={handlePageChange}
         />

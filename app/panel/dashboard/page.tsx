@@ -2,10 +2,35 @@
 
 import Link from 'next/link'
 import { ChartBarIcon, TicketIcon, ComputerDesktopIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import SubHeader from '@/components/SubHeader'
 import { useToastContext } from '@/components/ToastProvider'
 
 export default function Dashboard() {
+  const [searchValue, setSearchValue] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('all')
   const toast = useToastContext()
+  
+  const allActivities = [
+    { id: 1, message: 'Server-01 yeniden başlatıldı', time: '2 saat önce', type: 'success' },
+    { id: 2, message: 'Yeni ticket oluşturuldu: #1234', time: '4 saat önce', type: 'warning' },
+    { id: 3, message: 'Database bağlantı hatası', time: '6 saat önce', type: 'error' },
+    { id: 4, message: 'Yeni kullanıcı eklendi: John Doe', time: '8 saat önce', type: 'info' },
+  ]
+  
+  // Filtreleme ve arama
+  const filteredActivities = allActivities.filter(activity => {
+    const matchesSearch = activity.message.toLowerCase().includes(searchValue.toLowerCase())
+    const matchesFilter = selectedFilter === 'all' || activity.type === selectedFilter
+    return matchesSearch && matchesFilter
+  })
+  
+  const filterOptions = [
+    { value: 'success', label: 'Başarılı', count: allActivities.filter(a => a.type === 'success').length },
+    { value: 'warning', label: 'Uyarı', count: allActivities.filter(a => a.type === 'warning').length },
+    { value: 'error', label: 'Hata', count: allActivities.filter(a => a.type === 'error').length },
+    { value: 'info', label: 'Bilgi', count: allActivities.filter(a => a.type === 'info').length },
+  ]
 
   const handleTestToasts = () => {
     toast.success('İşlem Başarılı', 'Veriler başarıyla güncellendi')
@@ -15,6 +40,16 @@ export default function Dashboard() {
   }
   return (
     <>
+      <SubHeader
+        title="Dashboard"
+        description="Sistem durumu ve performans istatistikleri"
+        searchPlaceholder="Aktivite ara..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        filterOptions={filterOptions}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+      />
       {/* Quick stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
@@ -170,26 +205,17 @@ export default function Dashboard() {
         </div>
         <div className="p-6">
           <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-green-400 rounded-full"></div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Server-01 yeniden başlatıldı</p>
-              <span className="text-xs text-gray-400">2 saat önce</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Yeni ticket oluşturuldu: #1234</p>
-              <span className="text-xs text-gray-400">4 saat önce</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-red-400 rounded-full"></div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Database bağlantı hatası</p>
-              <span className="text-xs text-gray-400">6 saat önce</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-blue-400 rounded-full"></div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Yeni kullanıcı eklendi: John Doe</p>
-              <span className="text-xs text-gray-400">8 saat önce</span>
-            </div>
+            {filteredActivities.map((activity) => (
+              <div key={activity.id} className="flex items-center space-x-3">
+                <div className={`flex-shrink-0 w-2 h-2 rounded-full ${
+                  activity.type === 'success' ? 'bg-green-400' :
+                  activity.type === 'warning' ? 'bg-yellow-400' :
+                  activity.type === 'error' ? 'bg-red-400' : 'bg-blue-400'
+                }`}></div>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{activity.message}</p>
+                <span className="text-xs text-gray-400">{activity.time}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
