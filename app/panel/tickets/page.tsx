@@ -1,11 +1,35 @@
+'use client'
+
 import { PlusIcon } from '@heroicons/react/24/outline'
+import Pagination from '@/components/Pagination'
+import { usePagination } from '@/lib/usePagination'
 
 export default function Tickets() {
-  const tickets = [
+  const allTickets = [
     { id: 1, title: 'Printer sorunu', status: 'Açık', priority: 'Yüksek', created: '2024-01-15' },
     { id: 2, title: 'Email erişim problemi', status: 'İşlemde', priority: 'Orta', created: '2024-01-14' },
     { id: 3, title: 'Yazılım güncelleme', status: 'Kapalı', priority: 'Düşük', created: '2024-01-13' },
+    { id: 4, title: 'Ağ bağlantı sorunu', status: 'Açık', priority: 'Yüksek', created: '2024-01-12' },
+    { id: 5, title: 'Sunucu performansı', status: 'İşlemde', priority: 'Yüksek', created: '2024-01-11' },
+    { id: 6, title: 'Kullanıcı hesabı sorunu', status: 'Açık', priority: 'Orta', created: '2024-01-10' },
+    { id: 7, title: 'Backup hatası', status: 'Kapalı', priority: 'Yüksek', created: '2024-01-09' },
+    { id: 8, title: 'VPN bağlantısı', status: 'İşlemde', priority: 'Orta', created: '2024-01-08' },
+    { id: 9, title: 'Lisans yenileme', status: 'Açık', priority: 'Düşük', created: '2024-01-07' },
+    { id: 10, title: 'Güvenlik güncelleme', status: 'Kapalı', priority: 'Yüksek', created: '2024-01-06' },
+    { id: 11, title: 'Mobil uygulama hatası', status: 'Açık', priority: 'Orta', created: '2024-01-05' },
+    { id: 12, title: 'Veritabanı optimizasyonu', status: 'İşlemde', priority: 'Düşük', created: '2024-01-04' },
   ]
+  
+  const {
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    startIndex,
+    endIndex,
+    handlePageChange
+  } = usePagination({ totalItems: allTickets.length })
+  
+  const tickets = allTickets.slice(startIndex, endIndex)
 
   return (
     <>
@@ -57,6 +81,15 @@ export default function Tickets() {
             </li>
           ))}
         </ul>
+        
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={allTickets.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+        />
       </div>
     </>
   )

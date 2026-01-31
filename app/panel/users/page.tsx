@@ -1,12 +1,38 @@
+'use client'
+
 import { UsersIcon, PlusIcon } from '@heroicons/react/24/outline'
+import Pagination from '@/components/Pagination'
+import { usePagination } from '@/lib/usePagination'
 
 export default function Users() {
-  const users = [
+  const allUsers = [
     { id: 1, name: 'Ahmet Yılmaz', email: 'ahmet@company.com', role: 'Admin', status: 'Aktif' },
     { id: 2, name: 'Ayşe Demir', email: 'ayse@company.com', role: 'Teknisyen', status: 'Aktif' },
     { id: 3, name: 'Mehmet Kaya', email: 'mehmet@company.com', role: 'Kullanıcı', status: 'Pasif' },
     { id: 4, name: 'Fatma Özkan', email: 'fatma@company.com', role: 'Teknisyen', status: 'Aktif' },
+    { id: 5, name: 'Ali Veli', email: 'ali@company.com', role: 'Kullanıcı', status: 'Aktif' },
+    { id: 6, name: 'Zeynep Ak', email: 'zeynep@company.com', role: 'Admin', status: 'Aktif' },
+    { id: 7, name: 'Murat Çelik', email: 'murat@company.com', role: 'Teknisyen', status: 'Pasif' },
+    { id: 8, name: 'Elif Yıldız', email: 'elif@company.com', role: 'Kullanıcı', status: 'Aktif' },
+    { id: 9, name: 'Burak Kara', email: 'burak@company.com', role: 'Teknisyen', status: 'Aktif' },
+    { id: 10, name: 'Seda Gül', email: 'seda@company.com', role: 'Kullanıcı', status: 'Pasif' },
+    { id: 11, name: 'Can Demir', email: 'can@company.com', role: 'Kullanıcı', status: 'Aktif' },
+    { id: 12, name: 'Deniz Aydın', email: 'deniz@company.com', role: 'Admin', status: 'Aktif' },
+    { id: 13, name: 'Ece Kaya', email: 'ece@company.com', role: 'Teknisyen', status: 'Pasif' },
+    { id: 14, name: 'Furkan Yılmaz', email: 'furkan@company.com', role: 'Kullanıcı', status: 'Aktif' },
+    { id: 15, name: 'Gül Özkan', email: 'gul@company.com', role: 'Teknisyen', status: 'Aktif' },
   ]
+  
+  const {
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    startIndex,
+    endIndex,
+    handlePageChange
+  } = usePagination({ totalItems: allUsers.length })
+  
+  const users = allUsers.slice(startIndex, endIndex)
 
   return (
     <>
@@ -81,6 +107,15 @@ export default function Users() {
             </table>
           </div>
         </div>
+        
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={allUsers.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+        />
       </div>
     </>
   )
