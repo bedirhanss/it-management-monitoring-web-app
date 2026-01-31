@@ -1,19 +1,79 @@
 'use client'
 
-import { ComputerDesktopIcon, ServerIcon, ShieldCheckIcon, ChartBarIcon, CogIcon, WifiIcon, CloudIcon, UserGroupIcon, TicketIcon, EyeIcon } from '@heroicons/react/24/outline'
+import { ComputerDesktopIcon, ServerIcon, ShieldCheckIcon, ChartBarIcon, CogIcon, WifiIcon, CloudIcon, UserGroupIcon, TicketIcon, EyeIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import ThemeToggle from '@/components/SafeThemeToggle'
+import { useState } from 'react'
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const navigation = [
+    { name: 'Ana Sayfa', href: '#home' },
+    { name: 'Özellikler', href: '#features' },
+    { name: 'Teknolojiler', href: '#technologies' },
+    { name: 'Hakkında', href: '#about' },
+  ]
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <ComputerDesktopIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-2" />
+                <span className="text-xl font-bold text-gray-900 dark:text-white">IT Management</span>
+              </div>
+            </div>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-8">
+              {navigation.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  {item.name}
+                </a>
+              ))}
+            </nav>
+
+            {/* Right side buttons */}
+            <div className="hidden md:flex items-center space-x-4">
+              <Link
+                href="/login"
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Giriş Yap
+              </Link>
+            </div>
+
+            {/* Mobile buttons */}
+            <div className="md:hidden flex items-center mr-12">
+              <Link
+                href="/login"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Giriş Yap
+              </Link>
+            </div>
+          </div>
+
+
+        </div>
+      </header>
+
+      {/* Theme Toggle - Fixed top right */}
+      <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div id="home" className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="relative z-10 pb-8 bg-white dark:bg-gray-900 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
             <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
@@ -57,7 +117,7 @@ export default function LandingPage() {
       </div>
 
       {/* Features Section */}
-      <div id="features" className="py-12 bg-gray-50 dark:bg-gray-800">
+      <div id="features" className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:text-center">
             <h2 className="text-base text-blue-600 dark:text-blue-400 font-semibold tracking-wide uppercase">Özellikler</h2>
@@ -116,7 +176,7 @@ export default function LandingPage() {
       </div>
 
       {/* Technology Stack */}
-      <div className="bg-white dark:bg-gray-900 py-12">
+      <div id="technologies" className="bg-white dark:bg-gray-900 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:text-center">
             <h2 className="text-base text-blue-600 dark:text-blue-400 font-semibold tracking-wide uppercase">Teknolojiler</h2>
@@ -185,8 +245,42 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* About Section */}
+      <div id="about" className="py-16 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center">
+            <h2 className="text-base text-blue-600 dark:text-blue-400 font-semibold tracking-wide uppercase">Proje Hakkında</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+              Portfolyo Projesi
+            </p>
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 dark:text-gray-400 lg:mx-auto">
+              Modern web teknolojileri kullanılarak geliştirilmiş kapsamlı IT yönetim sistemi.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Full-Stack Geliştirme</h3>
+                <p className="text-gray-600 dark:text-gray-400">Next.js, TypeScript ve PostgreSQL ile modern web uygulaması geliştirme.</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Responsive Tasarım</h3>
+                <p className="text-gray-600 dark:text-gray-400">Tailwind CSS ile mobil uyumlu ve modern arayüz tasarımı.</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Güvenli Authentication</h3>
+                <p className="text-gray-600 dark:text-gray-400">JWT tabanlı güvenli kullanıcı kimlik doğrulama sistemi.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Footer */}
-      <footer className="bg-gray-50 dark:bg-gray-800">
+      <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-base text-gray-500 dark:text-gray-400">
