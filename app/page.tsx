@@ -8,6 +8,18 @@ import { useState } from 'react'
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault()
+    const element = document.getElementById(targetId.replace('#', ''))
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+    setMobileMenuOpen(false)
+  }
+
   const navigation = [
     { name: 'Ana Sayfa', href: '#home' },
     { name: 'Özellikler', href: '#features' },
@@ -35,7 +47,8 @@ export default function LandingPage() {
                 <a
                   key={item.name}
                   href={item.href}
-                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium transition-colors"
+                  onClick={(e) => handleSmoothScroll(e, item.href)}
+                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 text-sm font-medium transition-colors cursor-pointer"
                 >
                   {item.name}
                 </a>
@@ -106,7 +119,8 @@ export default function LandingPage() {
                 </Link>
                 <a
                   href="#features"
-                  className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
+                  onClick={(e) => handleSmoothScroll(e, '#features')}
+                  className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
                 >
                   Özellikler
                 </a>
