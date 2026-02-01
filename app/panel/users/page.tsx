@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
+import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 
 export default function Users() {
@@ -12,7 +13,9 @@ export default function Users() {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [viewingUser, setViewingUser] = useState<any>(null)
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -82,6 +85,11 @@ export default function Users() {
     setEditingUser(null)
   }
 
+  const handleViewUser = (user: any) => {
+    setViewingUser(user)
+    setIsDetailModalOpen(true)
+  }
+
   return (
     <>
       <SubHeader
@@ -128,6 +136,9 @@ export default function Users() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     İşlemler
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Detay
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -166,6 +177,14 @@ export default function Users() {
                         Düzenle
                       </button>
                       <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Sil</button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => handleViewUser(user)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                      >
+                        Görüntüle
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -375,6 +394,30 @@ export default function Users() {
           </button>
         </ModalFooter>
       </Modal>
+      
+      {/* View Modal */}
+      <ViewModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={`Kullanıcı Detayı - ${viewingUser?.name}`}
+        data={viewingUser || {}}
+        fields={[
+          { key: 'id', label: 'ID' },
+          { key: 'name', label: 'Ad Soyad' },
+          { key: 'email', label: 'Email' },
+          { key: 'role', label: 'Rol' },
+          { key: 'status', label: 'Durum' },
+        ]}
+        onEdit={() => {
+          setEditingUser(viewingUser)
+          setIsEditModalOpen(true)
+        }}
+        onDelete={() => {
+          if (confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
+            console.log('Silinen kullanıcı ID:', viewingUser?.id)
+          }
+        }}
+      />
     </>
   )
 }

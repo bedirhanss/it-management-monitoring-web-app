@@ -4,13 +4,16 @@ import { ComputerDesktopIcon, ServerIcon, PlusIcon } from '@heroicons/react/24/o
 import { useState } from 'react'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
+import ViewModal from '@/components/ViewModal'
 
 export default function Monitoring() {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [editingServer, setEditingServer] = useState<any>(null)
+  const [viewingServer, setViewingServer] = useState<any>(null)
   const [newServer, setNewServer] = useState({
     name: '',
     ipAddress: '',
@@ -59,6 +62,11 @@ export default function Monitoring() {
     if (confirm('Bu sunucuyu silmek istediğinizden emin misiniz?')) {
       console.log('Silinen sunucu ID:', serverId)
     }
+  }
+
+  const handleViewServer = (server: any) => {
+    setViewingServer(server)
+    setIsDetailModalOpen(true)
   }
 
   return (
@@ -115,6 +123,9 @@ export default function Monitoring() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     İşlemler
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Detay
                   </th>
                 </tr>
               </thead>
@@ -184,6 +195,14 @@ export default function Monitoring() {
                         className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                       >
                         Sil
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => handleViewServer(server)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                      >
+                        Görüntüle
                       </button>
                     </td>
                   </tr>
@@ -353,6 +372,28 @@ export default function Monitoring() {
           </button>
         </ModalFooter>
       </Modal>
+      
+      {/* View Modal */}
+      <ViewModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={`Sunucu Detayı - ${viewingServer?.name}`}
+        data={viewingServer || {}}
+        fields={[
+          { key: 'id', label: 'ID' },
+          { key: 'name', label: 'Sunucu Adı' },
+          { key: 'ipAddress', label: 'IP Adresi' },
+          { key: 'status', label: 'Durum' },
+          { key: 'cpu', label: 'CPU Kullanımı (%)' },
+          { key: 'memory', label: 'Bellek Kullanımı (%)' },
+          { key: 'disk', label: 'Disk Kullanımı (%)' },
+        ]}
+        onEdit={() => {
+          setEditingServer(viewingServer)
+          setIsEditModalOpen(true)
+        }}
+        onDelete={() => handleDeleteServer(viewingServer?.id)}
+      />
     </>
   )
 }

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
+import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 
 export default function Tickets() {
@@ -12,7 +13,9 @@ export default function Tickets() {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [editingTicket, setEditingTicket] = useState<any>(null)
+  const [viewingTicket, setViewingTicket] = useState<any>(null)
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
@@ -82,6 +85,11 @@ export default function Tickets() {
     }
   }
 
+  const handleViewTicket = (ticket: any) => {
+    setViewingTicket(ticket)
+    setIsDetailModalOpen(true)
+  }
+
   return (
     <>
       <SubHeader
@@ -137,6 +145,9 @@ export default function Tickets() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     İşlemler
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Detay
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -155,7 +166,7 @@ export default function Tickets() {
                           {ticket.description}
                         </div>
                         <button 
-                          onClick={() => handleEditTicket(ticket)}
+                          onClick={() => handleViewTicket(ticket)}
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs underline flex-shrink-0"
                         >
                           daha fazla
@@ -206,6 +217,14 @@ export default function Tickets() {
                         className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                       >
                         Sil
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => handleViewTicket(ticket)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                      >
+                        Görüntüle
                       </button>
                     </td>
                   </tr>
@@ -396,6 +415,28 @@ export default function Tickets() {
           </button>
         </ModalFooter>
       </Modal>
+      
+      {/* View Modal */}
+      <ViewModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={`Ticket Detayı - #${viewingTicket?.id}`}
+        data={viewingTicket || {}}
+        fields={[
+          { key: 'id', label: 'ID' },
+          { key: 'title', label: 'Başlık' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'status', label: 'Durum' },
+          { key: 'priority', label: 'Öncelik' },
+          { key: 'assignedTo', label: 'Atanan Kişi' },
+          { key: 'created', label: 'Oluşturulma Tarihi' },
+        ]}
+        onEdit={() => {
+          setEditingTicket(viewingTicket)
+          setIsEditModalOpen(true)
+        }}
+        onDelete={() => handleDeleteTicket(viewingTicket?.id)}
+      />
     </>
   )
 }

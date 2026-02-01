@@ -95,7 +95,7 @@ interface ModalFooterProps {
 
 export function ModalFooter({ children, className = '' }: ModalFooterProps) {
   return (
-    <div className={`bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 ${className}`}>
+    <div className={`px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 ${className}`}>
       {children}
     </div>
   )
