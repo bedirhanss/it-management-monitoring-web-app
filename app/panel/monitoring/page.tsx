@@ -1,18 +1,28 @@
 'use client'
 
-import { ComputerDesktopIcon, ServerIcon } from '@heroicons/react/24/outline'
+import { ComputerDesktopIcon, ServerIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import SubHeader from '@/components/SubHeader'
+import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 
 export default function Monitoring() {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingServer, setEditingServer] = useState<any>(null)
+  const [newServer, setNewServer] = useState({
+    name: '',
+    ipAddress: '',
+    serverType: 'Web Server',
+    description: ''
+  })
   
   const allServers = [
-    { name: 'Web Server 01', status: 'online', cpu: 45, memory: 67, disk: 23 },
-    { name: 'Database Server', status: 'online', cpu: 78, memory: 89, disk: 45 },
-    { name: 'Mail Server', status: 'offline', cpu: 0, memory: 0, disk: 67 },
-    { name: 'File Server', status: 'online', cpu: 23, memory: 34, disk: 89 },
+    { id: 1, name: 'Web Server 01', ipAddress: '192.168.1.10', status: 'online', cpu: 45, memory: 67, disk: 23 },
+    { id: 2, name: 'Database Server', ipAddress: '192.168.1.11', status: 'online', cpu: 78, memory: 89, disk: 45 },
+    { id: 3, name: 'Mail Server', ipAddress: '192.168.1.12', status: 'offline', cpu: 0, memory: 0, disk: 67 },
+    { id: 4, name: 'File Server', ipAddress: '192.168.1.13', status: 'online', cpu: 23, memory: 34, disk: 89 },
   ]
   
   // Filtreleme ve arama
@@ -27,6 +37,30 @@ export default function Monitoring() {
     { value: 'offline', label: 'Çevrimdışı', count: allServers.filter(s => s.status === 'offline').length },
   ]
 
+  const handleCreateServer = () => {
+    // Sunucu ekleme işlemi burada yapılacak
+    console.log('Yeni sunucu:', newServer)
+    setIsModalOpen(false)
+    setNewServer({ name: '', ipAddress: '', serverType: 'Web Server', description: '' })
+  }
+
+  const handleEditServer = (server: any) => {
+    setEditingServer({...server})
+    setIsEditModalOpen(true)
+  }
+
+  const handleUpdateServer = () => {
+    console.log('Güncellenen sunucu:', editingServer)
+    setIsEditModalOpen(false)
+    setEditingServer(null)
+  }
+
+  const handleDeleteServer = (serverId: number) => {
+    if (confirm('Bu sunucuyu silmek istediğinizden emin misiniz?')) {
+      console.log('Silinen sunucu ID:', serverId)
+    }
+  }
+
   return (
     <>
       <SubHeader
@@ -38,69 +72,287 @@ export default function Monitoring() {
         filterOptions={filterOptions}
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
+        actionButton={{
+          label: 'Sistem Ekle',
+          icon: PlusIcon,
+          onClick: () => setIsModalOpen(true)
+        }}
+        exportButton={{
+          table: 'servers'
+        }}
+        printButton={{
+          targetId: 'monitoring-content',
+          fileName: 'sistem_izleme_raporu'
+        }}
       />
 
-      {/* Servers grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {filteredServers.map((server, index) => (
-          <div key={index} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <ServerIcon className="h-6 w-6 text-gray-400 dark:text-gray-500 mr-2" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">{server.name}</h3>
-                </div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  server.status === 'online' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                }`}>
-                  {server.status === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'}
-                </span>
-              </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">CPU</span>
-                    <span className="text-gray-900 dark:text-white">{server.cpu}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${server.cpu > 80 ? 'bg-red-600' : server.cpu > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
-                      style={{ width: `${server.cpu}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Bellek</span>
-                    <span className="text-gray-900 dark:text-white">{server.memory}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${server.memory > 80 ? 'bg-red-600' : server.memory > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
-                      style={{ width: `${server.memory}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Disk</span>
-                    <span className="text-gray-900 dark:text-white">{server.disk}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${server.disk > 80 ? 'bg-red-600' : server.disk > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
-                      style={{ width: `${server.disk}%` }}
-                    ></div>
-                  </div>
-                </div>
+      <div id="monitoring-content">
+
+      {/* Servers table */}
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Sunucu
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    IP Adresi
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Durum
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    CPU
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Bellek
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Disk
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    İşlemler
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredServers.map((server) => (
+                  <tr key={server.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <ServerIcon className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2" />
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {server.name}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {server.ipAddress}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        server.status === 'online' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                      }`}>
+                        {server.status === 'online' ? 'Çevrimiçi' : 'Çevrimişdışı'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                          <div 
+                            className={`h-2 rounded-full ${server.cpu > 80 ? 'bg-red-600' : server.cpu > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                            style={{ width: `${server.cpu}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-white">{server.cpu}%</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                          <div 
+                            className={`h-2 rounded-full ${server.memory > 80 ? 'bg-red-600' : server.memory > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                            style={{ width: `${server.memory}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-white">{server.memory}%</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                          <div 
+                            className={`h-2 rounded-full ${server.disk > 80 ? 'bg-red-600' : server.disk > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                            style={{ width: `${server.disk}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-white">{server.disk}%</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button 
+                        onClick={() => handleEditServer(server)}
+                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-4"
+                      >
+                        Düzenle
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteServer(server.id)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                      >
+                        Sil
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </div>
+      
+      {/* New Server Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Yeni Sistem Ekle"
+      >
+        <ModalBody>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Sistem Adı
+              </label>
+              <input
+                type="text"
+                value={newServer.name}
+                onChange={(e) => setNewServer({...newServer, name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="örn: Web Server 02"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                IP Adresi
+              </label>
+              <input
+                type="text"
+                value={newServer.ipAddress}
+                onChange={(e) => setNewServer({...newServer, ipAddress: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="192.168.1.100"
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Sunucu Tipi
+              </label>
+              <select
+                value={newServer.serverType}
+                onChange={(e) => setNewServer({...newServer, serverType: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Web Server">Web Server</option>
+                <option value="Database Server">Database Server</option>
+                <option value="Mail Server">Mail Server</option>
+                <option value="File Server">File Server</option>
+                <option value="Application Server">Application Server</option>
+                <option value="Backup Server">Backup Server</option>
+              </select>
+            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Açıklama
+              </label>
+              <textarea
+                value={newServer.description}
+                onChange={(e) => setNewServer({...newServer, description: e.target.value})}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Sunucu hakkında kısa açıklama (opsiyonel)"
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Bilgi:</strong> Sistem eklendikten sonra otomatik olarak izlemeye başlanacak ve performans metrikleri toplanmaya başlayacaktır.
+                </p>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        </ModalBody>
+        
+        <ModalFooter>
+          <button
+            onClick={handleCreateServer}
+            disabled={!newServer.name.trim() || !newServer.ipAddress.trim()}
+            className="w-full sm:w-auto inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3"
+          >
+            Sistem Ekle
+          </button>
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="mt-3 w-full sm:mt-0 sm:w-auto inline-flex justify-center rounded-md bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            İptal
+          </button>
+        </ModalFooter>
+      </Modal>
+      
+      {/* Edit Server Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Sunucu Düzenle"
+      >
+        <ModalBody>
+          {editingServer && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Sistem Adı
+                </label>
+                <input
+                  type="text"
+                  value={editingServer.name}
+                  onChange={(e) => setEditingServer({...editingServer, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  IP Adresi
+                </label>
+                <input
+                  type="text"
+                  value={editingServer.ipAddress}
+                  onChange={(e) => setEditingServer({...editingServer, ipAddress: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Durum
+                </label>
+                <select
+                  value={editingServer.status}
+                  onChange={(e) => setEditingServer({...editingServer, status: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="online">Çevrimiçi</option>
+                  <option value="offline">Çevrimişdışı</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        
+        <ModalFooter>
+          <button
+            onClick={handleUpdateServer}
+            disabled={!editingServer?.name?.trim() || !editingServer?.ipAddress?.trim()}
+            className="w-full sm:w-auto inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3"
+          >
+            Değişiklikleri Kaydet
+          </button>
+          <button
+            onClick={() => setIsEditModalOpen(false)}
+            className="mt-3 w-full sm:mt-0 sm:w-auto inline-flex justify-center rounded-md bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            İptal
+          </button>
+        </ModalFooter>
+      </Modal>
     </>
   )
 }

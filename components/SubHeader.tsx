@@ -2,6 +2,7 @@
 
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import ExportButton from './ExportButton'
 
 interface FilterOption {
   value: string
@@ -23,6 +24,10 @@ interface SubHeaderProps {
     icon?: React.ComponentType<{ className?: string }>
     onClick: () => void
   }
+  exportButton?: {
+    table: string
+    fileName?: string
+  }
 }
 
 export default function SubHeader({
@@ -34,7 +39,8 @@ export default function SubHeader({
   filterOptions = [],
   selectedFilter,
   onFilterChange,
-  actionButton
+  actionButton,
+  exportButton
 }: SubHeaderProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -58,8 +64,14 @@ export default function SubHeader({
               <p className="mt-1 text-gray-600 dark:text-gray-400">{description}</p>
             )}
           </div>
-          {actionButton && (
-            <div className="mt-4 sm:mt-0">
+          <div className="mt-4 sm:mt-0 flex gap-2">
+            {exportButton && (
+              <ExportButton
+                table={exportButton.table}
+                fileName={exportButton.fileName}
+              />
+            )}
+            {actionButton && (
               <button
                 onClick={actionButton.onClick}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
@@ -67,8 +79,8 @@ export default function SubHeader({
                 {actionButton.icon && <actionButton.icon className="h-4 w-4 mr-2" />}
                 {actionButton.label}
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
