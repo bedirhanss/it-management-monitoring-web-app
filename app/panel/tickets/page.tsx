@@ -1,7 +1,7 @@
 'use client'
 
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
@@ -19,35 +19,60 @@ export default function Tickets() {
   const [newTicket, setNewTicket] = useState({
     title: '',
     description: '',
-    priority: 'Orta'
+    priority: 'medium',
+    status: 'open',
+    assignedTo: ''
   })
-  
-  const allTickets = [
-    { id: 1, title: 'Printer sorunu', description: 'Ofis yazıcısı çalışmıyor, kağıt sıkışması var', status: 'Açık', priority: 'Yüksek', assignedTo: 'Ahmet Yılmaz', created: '2024-01-15' },
-    { id: 2, title: 'Email erişim problemi', description: 'Outlook bağlantı hatası, mail gönderilemiyor', status: 'İşlemde', priority: 'Orta', assignedTo: 'Ayşe Demir', created: '2024-01-14' },
-    { id: 3, title: 'Yazılım güncelleme', description: 'Antivirus güncellemesi gerekli, lisans süresi dolmuş', status: 'Kapalı', priority: 'Düşük', assignedTo: 'Mehmet Kaya', created: '2024-01-13' },
-    { id: 4, title: 'Ağ bağlantı sorunu', description: 'İnternet bağlantısı kesilip duruyor', status: 'Açık', priority: 'Yüksek', assignedTo: null, created: '2024-01-12' },
-    { id: 5, title: 'Sunucu performansı', description: 'Web sitesi yavaş açılıyor, performans sorunu', status: 'İşlemde', priority: 'Yüksek', assignedTo: 'Fatma Özkan', created: '2024-01-11' },
-    { id: 6, title: 'Kullanıcı hesabı sorunu', description: 'Şifre sıfırlama işlemi çalışmıyor', status: 'Açık', priority: 'Orta', assignedTo: 'Ali Veli', created: '2024-01-10' },
-    { id: 7, title: 'Backup hatası', description: 'Otomatik yedekleme sistemi hata veriyor', status: 'Kapalı', priority: 'Yüksek', assignedTo: 'Zeynep Ak', created: '2024-01-09' },
-    { id: 8, title: 'VPN bağlantısı', description: 'Uzaktan erişim VPN bağlantısı kurulamıyor', status: 'İşlemde', priority: 'Orta', assignedTo: 'Murat Çelik', created: '2024-01-08' },
-    { id: 9, title: 'Lisans yenileme', description: 'Office lisansı süresi dolacak, yenilenmesi gerekiyor', status: 'Açık', priority: 'Düşük', assignedTo: null, created: '2024-01-07' },
-    { id: 10, title: 'Güvenlik güncelleme', description: 'Windows güvenlik yamaları yüklenmeli', status: 'Kapalı', priority: 'Yüksek', assignedTo: 'Elif Yıldız', created: '2024-01-06' },
-    { id: 11, title: 'Mobil uygulama hatası', description: 'Android uygulaması çöküyor, hata raporu var', status: 'Açık', priority: 'Orta', assignedTo: 'Burak Kara', created: '2024-01-05' },
-    { id: 12, title: 'Veritabanı optimizasyonu', description: 'Sorgu performansı düşük, indeksleme gerekli', status: 'İşlemde', priority: 'Düşük', assignedTo: null, created: '2024-01-04' },
-  ]
-  
-  // Filtreleme ve arama
+  const [allTickets, setAllTickets] = useState<any[]>([])
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchTickets()
+    fetchUsers()
+  }, [])
+
+  const fetchTickets = async () => {
+    try {
+      const response = await fetch('/api/tickets')
+      if (response.ok) {
+        const data = await response.json()
+        setAllTickets(data.tickets)
+      }
+    } catch (error) {
+      console.error('Fetch error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users')
+      if (response.ok) {
+        const data = await response.json()
+        setAllUsers(data.users || [])
+      }
+    } catch (error) {
+      console.error('Fetch users error:', error)
+    }
+  }
+
+  const statusMap: any = { 'open': 'Açık', 'in_progress': 'İşlemde', 'closed': 'Kapalı' }
+  const priorityMap: any = { 'low': 'Düşük', 'medium': 'Orta', 'high': 'Yüksek' }
+  const reverseStatusMap: any = { 'Açık': 'open', 'İşlemde': 'in_progress', 'Kapalı': 'closed' }
+  const reversePriorityMap: any = { 'Düşük': 'low', 'Orta': 'medium', 'Yüksek': 'high' }
+
   const filteredTickets = allTickets.filter(ticket => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchValue.toLowerCase())
-    const matchesFilter = selectedFilter === 'all' || ticket.status === selectedFilter
+    const matchesFilter = selectedFilter === 'all' || statusMap[ticket.status] === selectedFilter
     return matchesSearch && matchesFilter
   })
   
   const filterOptions = [
-    { value: 'Açık', label: 'Açık', count: allTickets.filter(t => t.status === 'Açık').length },
-    { value: 'İşlemde', label: 'İşlemde', count: allTickets.filter(t => t.status === 'İşlemde').length },
-    { value: 'Kapalı', label: 'Kapalı', count: allTickets.filter(t => t.status === 'Kapalı').length },
+    { value: 'Açık', label: 'Açık', count: allTickets.filter(t => t.status === 'open').length },
+    { value: 'İşlemde', label: 'İşlemde', count: allTickets.filter(t => t.status === 'in_progress').length },
+    { value: 'Kapalı', label: 'Kapalı', count: allTickets.filter(t => t.status === 'closed').length },
   ]
   
   const {
@@ -61,32 +86,82 @@ export default function Tickets() {
   
   const tickets = filteredTickets.slice(startIndex, endIndex)
 
-  const handleCreateTicket = () => {
-    // Ticket oluşturma işlemi burada yapılacak
-    console.log('Yeni ticket:', newTicket)
-    setIsModalOpen(false)
-    setNewTicket({ title: '', description: '', priority: 'Orta' })
+  const handleCreateTicket = async () => {
+    try {
+      const response = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTicket.title,
+          description: newTicket.description,
+          priority: newTicket.priority,
+          status: newTicket.status,
+          assignedTo: newTicket.assignedTo || null
+        })
+      })
+      if (response.ok) {
+        await fetchTickets()
+        setIsModalOpen(false)
+        setNewTicket({ title: '', description: '', priority: 'medium', status: 'open', assignedTo: '' })
+      }
+    } catch (error) {
+      console.error('Create error:', error)
+    }
   }
 
   const handleEditTicket = (ticket: any) => {
-    setEditingTicket({...ticket})
+    setEditingTicket({
+      ...ticket,
+      status: statusMap[ticket.status] || ticket.status,
+      priority: priorityMap[ticket.priority] || ticket.priority
+    })
     setIsEditModalOpen(true)
   }
 
-  const handleUpdateTicket = () => {
-    console.log('Güncellenen ticket:', editingTicket)
-    setIsEditModalOpen(false)
-    setEditingTicket(null)
+  const handleUpdateTicket = async () => {
+    try {
+      const response = await fetch(`/api/tickets/${editingTicket.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingTicket.title,
+          description: editingTicket.description,
+          status: reverseStatusMap[editingTicket.status] || editingTicket.status,
+          priority: reversePriorityMap[editingTicket.priority] || editingTicket.priority,
+          assignedTo: editingTicket.assigned_to || null
+        })
+      })
+      if (response.ok) {
+        await fetchTickets()
+        setIsEditModalOpen(false)
+        setEditingTicket(null)
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+    }
   }
 
-  const handleDeleteTicket = (ticketId: number) => {
+  const handleDeleteTicket = async (ticketId: number) => {
     if (confirm('Bu ticketi silmek istediğinizden emin misiniz?')) {
-      console.log('Silinen ticket ID:', ticketId)
+      try {
+        const response = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' })
+        if (response.ok) {
+          await fetchTickets()
+          setIsDetailModalOpen(false)
+        }
+      } catch (error) {
+        console.error('Delete error:', error)
+      }
     }
   }
 
   const handleViewTicket = (ticket: any) => {
-    setViewingTicket(ticket)
+    setViewingTicket({
+      ...ticket,
+      status: statusMap[ticket.status],
+      priority: priorityMap[ticket.priority],
+      created: new Date(ticket.created_at).toLocaleDateString('tr-TR')
+    })
     setIsDetailModalOpen(true)
   }
 
@@ -117,7 +192,11 @@ export default function Tickets() {
 
       <div id="tickets-content">
 
-      {/* Tickets table */}
+      {loading ? (
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Yükleniyor...</p>
+        </div>
+      ) : (
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
         <div className="px-4 py-5 sm:p-6">
           <div className="overflow-x-auto">
@@ -175,26 +254,26 @@ export default function Tickets() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        ticket.status === 'Açık' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                        ticket.status === 'İşlemde' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                        ticket.status === 'open' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                        ticket.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
                         'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                       }`}>
-                        {ticket.status}
+                        {statusMap[ticket.status]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        ticket.priority === 'Yüksek' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                        ticket.priority === 'Orta' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                        ticket.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                        ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
                         'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                       }`}>
-                        {ticket.priority}
+                        {priorityMap[ticket.priority]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {ticket.assignedTo ? (
+                      {ticket.assigned_to_name ? (
                         <span className="text-sm text-gray-900 dark:text-white">
-                          {ticket.assignedTo}
+                          {ticket.assigned_to_name}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400 dark:text-gray-500 italic">
@@ -203,7 +282,7 @@ export default function Tickets() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {ticket.created}
+                      {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
@@ -234,7 +313,6 @@ export default function Tickets() {
           </div>
         </div>
         
-        {/* Pagination */}
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -243,9 +321,9 @@ export default function Tickets() {
           onPageChange={handlePageChange}
         />
       </div>
+      )}
       </div>
       
-      {/* New Ticket Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -288,9 +366,40 @@ export default function Tickets() {
                 onChange={(e) => setNewTicket({...newTicket, priority: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Düşük">Düşük</option>
-                <option value="Orta">Orta</option>
-                <option value="Yüksek">Yüksek</option>
+                <option value="low">Düşük</option>
+                <option value="medium">Orta</option>
+                <option value="high">Yüksek</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Durum
+              </label>
+              <select
+                value={newTicket.status}
+                onChange={(e) => setNewTicket({...newTicket, status: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="open">Açık</option>
+                <option value="in_progress">İşlemde</option>
+                <option value="closed">Kapalı</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Atanan Kişi
+              </label>
+              <select
+                value={newTicket.assignedTo}
+                onChange={(e) => setNewTicket({...newTicket, assignedTo: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Atanmamış</option>
+                {allUsers.map(user => (
+                  <option key={user.id} value={user.id}>{user.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -313,7 +422,6 @@ export default function Tickets() {
         </ModalFooter>
       </Modal>
       
-      {/* Edit Ticket Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -382,17 +490,14 @@ export default function Tickets() {
                   Atanan Kişi
                 </label>
                 <select
-                  value={editingTicket.assignedTo || ''}
-                  onChange={(e) => setEditingTicket({...editingTicket, assignedTo: e.target.value || null})}
+                  value={editingTicket.assigned_to || ''}
+                  onChange={(e) => setEditingTicket({...editingTicket, assigned_to: e.target.value || null})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Atanmamış</option>
-                  <option value="Ahmet Yılmaz">Ahmet Yılmaz</option>
-                  <option value="Ayşe Demir">Ayşe Demir</option>
-                  <option value="Mehmet Kaya">Mehmet Kaya</option>
-                  <option value="Fatma Özkan">Fatma Özkan</option>
-                  <option value="Ali Veli">Ali Veli</option>
-                  <option value="Zeynep Ak">Zeynep Ak</option>
+                  {allUsers.map(user => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -416,7 +521,6 @@ export default function Tickets() {
         </ModalFooter>
       </Modal>
       
-      {/* View Modal */}
       <ViewModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
@@ -428,7 +532,7 @@ export default function Tickets() {
           { key: 'description', label: 'Açıklama' },
           { key: 'status', label: 'Durum' },
           { key: 'priority', label: 'Öncelik' },
-          { key: 'assignedTo', label: 'Atanan Kişi' },
+          { key: 'assigned_to_name', label: 'Atanan Kişi' },
           { key: 'created', label: 'Oluşturulma Tarihi' },
         ]}
         onEdit={() => {
