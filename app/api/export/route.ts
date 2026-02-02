@@ -119,6 +119,108 @@ export async function GET(request: NextRequest) {
         fileName = 'sunucular'
         break
 
+      case 'inventory':
+        const inventoryResult = await pool.query(`
+          SELECT 
+            i.id,
+            i.name,
+            i.type,
+            i.brand,
+            i.model,
+            i.serial_number,
+            i.location,
+            i.status,
+            i.purchase_date,
+            i.warranty_period,
+            i.warranty_end_date,
+            u.name as created_by_name,
+            i.created_at::date as created
+          FROM inventory i
+          LEFT JOIN users u ON i.created_by = u.id
+          ORDER BY i.created_at DESC
+        `)
+        data = inventoryResult.rows
+        columns = [
+          { header: 'ID', key: 'id', width: 10 },
+          { header: 'Cihaz Adı', key: 'name', width: 25 },
+          { header: 'Tip', key: 'type', width: 15 },
+          { header: 'Marka', key: 'brand', width: 15 },
+          { header: 'Model', key: 'model', width: 20 },
+          { header: 'Seri No', key: 'serial_number', width: 20 },
+          { header: 'Lokasyon', key: 'location', width: 15 },
+          { header: 'Durum', key: 'status', width: 15 },
+          { header: 'Satın Alma', key: 'purchase_date', width: 15 },
+          { header: 'Garanti Süresi', key: 'warranty_period', width: 15 },
+          { header: 'Garanti Bitiş', key: 'warranty_end_date', width: 15 },
+          { header: 'Oluşturan', key: 'created_by_name', width: 20 },
+          { header: 'Oluşturulma', key: 'created', width: 15 },
+        ]
+        sheetName = 'Envanter'
+        fileName = 'envanter'
+        break
+
+      case 'projects':
+        const projectsResult = await pool.query(`
+          SELECT 
+            p.id,
+            p.name,
+            p.description,
+            p.status,
+            p.priority,
+            p.start_date,
+            p.end_date,
+            u.name as assigned_to_name,
+            p.budget,
+            p.created_at::date as created
+          FROM projects p
+          LEFT JOIN users u ON p.assigned_to = u.id
+          ORDER BY p.created_at DESC
+        `)
+        data = projectsResult.rows
+        columns = [
+          { header: 'ID', key: 'id', width: 10 },
+          { header: 'Proje Adı', key: 'name', width: 30 },
+          { header: 'Açıklama', key: 'description', width: 40 },
+          { header: 'Durum', key: 'status', width: 15 },
+          { header: 'Öncelik', key: 'priority', width: 15 },
+          { header: 'Başlangıç', key: 'start_date', width: 15 },
+          { header: 'Bitiş', key: 'end_date', width: 15 },
+          { header: 'Sorumlu', key: 'assigned_to_name', width: 20 },
+          { header: 'Bütçe', key: 'budget', width: 15 },
+          { header: 'Oluşturulma', key: 'created', width: 15 },
+        ]
+        sheetName = 'Projeler'
+        fileName = 'projeler'
+        break
+
+      case 'logs':
+        const logsResult = await pool.query(`
+          SELECT 
+            id,
+            log_level,
+            source,
+            message,
+            ip_address,
+            details,
+            created_at
+          FROM system_logs
+          ORDER BY created_at DESC
+          LIMIT 1000
+        `)
+        data = logsResult.rows
+        columns = [
+          { header: 'ID', key: 'id', width: 10 },
+          { header: 'Seviye', key: 'log_level', width: 15 },
+          { header: 'Kaynak', key: 'source', width: 20 },
+          { header: 'Mesaj', key: 'message', width: 50 },
+          { header: 'IP Adresi', key: 'ip_address', width: 20 },
+          { header: 'Detaylar', key: 'details', width: 40 },
+          { header: 'Zaman', key: 'created_at', width: 20 },
+        ]
+        sheetName = 'Sistem Logları'
+        fileName = 'sistem_loglari'
+        break
+
       default:
         return NextResponse.json({ error: 'Invalid table' }, { status: 400 })
     }
