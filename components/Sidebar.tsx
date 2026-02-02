@@ -10,7 +10,11 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  CogIcon
+  CogIcon,
+  ArchiveBoxIcon,
+  DocumentTextIcon,
+  FolderIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import ThemeToggle from '@/components/SafeThemeToggle'
@@ -20,6 +24,10 @@ const navigation = [
   { name: 'Tickets', href: '/panel/tickets', icon: TicketIcon },
   { name: 'Monitoring', href: '/panel/monitoring', icon: ComputerDesktopIcon },
   { name: 'Users', href: '/panel/users', icon: UsersIcon },
+  { name: 'Inventory', href: '/panel/inventory', icon: ArchiveBoxIcon },
+  { name: 'Logs', href: '/panel/logs', icon: DocumentTextIcon },
+  { name: 'Projects', href: '/panel/projects', icon: FolderIcon },
+  { name: 'Calendar', href: '/panel/calendar', icon: CalendarIcon },
 ]
 
 export default function Sidebar() {

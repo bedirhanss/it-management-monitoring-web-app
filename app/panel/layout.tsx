@@ -23,6 +23,10 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
       case '/panel/monitoring': return 'Sistem İzleme'
       case '/panel/users': return 'Kullanıcı Yönetimi'
       case '/panel/settings': return 'Ayarlar'
+      case '/panel/inventory': return 'Envanter Yönetimi'
+      case '/panel/logs': return 'Sistem Logları'
+      case '/panel/projects': return 'Proje Yönetimi'
+      case '/panel/calendar': return 'Takvim'
       default: return 'IT Management'
     }
   }
