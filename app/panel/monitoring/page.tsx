@@ -1,7 +1,7 @@
 'use client'
 
 import { ComputerDesktopIcon, ServerIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
@@ -16,19 +16,29 @@ export default function Monitoring() {
   const [viewingServer, setViewingServer] = useState<any>(null)
   const [newServer, setNewServer] = useState({
     name: '',
-    ipAddress: '',
-    serverType: 'Web Server',
-    description: ''
+    ipAddress: ''
   })
+  const [allServers, setAllServers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchServers()
+  }, [])
+
+  const fetchServers = async () => {
+    try {
+      const response = await fetch('/api/servers')
+      if (response.ok) {
+        const data = await response.json()
+        setAllServers(data.servers)
+      }
+    } catch (error) {
+      console.error('Fetch error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
   
-  const allServers = [
-    { id: 1, name: 'Web Server 01', ipAddress: '192.168.1.10', status: 'online', cpu: 45, memory: 67, disk: 23 },
-    { id: 2, name: 'Database Server', ipAddress: '192.168.1.11', status: 'online', cpu: 78, memory: 89, disk: 45 },
-    { id: 3, name: 'Mail Server', ipAddress: '192.168.1.12', status: 'offline', cpu: 0, memory: 0, disk: 67 },
-    { id: 4, name: 'File Server', ipAddress: '192.168.1.13', status: 'online', cpu: 23, memory: 34, disk: 89 },
-  ]
-  
-  // Filtreleme ve arama
   const filteredServers = allServers.filter(server => {
     const matchesSearch = server.name.toLowerCase().includes(searchValue.toLowerCase())
     const matchesFilter = selectedFilter === 'all' || server.status === selectedFilter
@@ -40,11 +50,21 @@ export default function Monitoring() {
     { value: 'offline', label: 'Çevrimdışı', count: allServers.filter(s => s.status === 'offline').length },
   ]
 
-  const handleCreateServer = () => {
-    // Sunucu ekleme işlemi burada yapılacak
-    console.log('Yeni sunucu:', newServer)
-    setIsModalOpen(false)
-    setNewServer({ name: '', ipAddress: '', serverType: 'Web Server', description: '' })
+  const handleCreateServer = async () => {
+    try {
+      const response = await fetch('/api/servers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newServer)
+      })
+      if (response.ok) {
+        await fetchServers()
+        setIsModalOpen(false)
+        setNewServer({ name: '', ipAddress: '' })
+      }
+    } catch (error) {
+      console.error('Create error:', error)
+    }
   }
 
   const handleEditServer = (server: any) => {
@@ -52,15 +72,38 @@ export default function Monitoring() {
     setIsEditModalOpen(true)
   }
 
-  const handleUpdateServer = () => {
-    console.log('Güncellenen sunucu:', editingServer)
-    setIsEditModalOpen(false)
-    setEditingServer(null)
+  const handleUpdateServer = async () => {
+    try {
+      const response = await fetch(`/api/servers/${editingServer.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingServer.name,
+          ipAddress: editingServer.ip_address,
+          status: editingServer.status
+        })
+      })
+      if (response.ok) {
+        await fetchServers()
+        setIsEditModalOpen(false)
+        setEditingServer(null)
+      }
+    } catch (error) {
+      console.error('Update error:', error)
+    }
   }
 
-  const handleDeleteServer = (serverId: number) => {
+  const handleDeleteServer = async (serverId: number) => {
     if (confirm('Bu sunucuyu silmek istediğinizden emin misiniz?')) {
-      console.log('Silinen sunucu ID:', serverId)
+      try {
+        const response = await fetch(`/api/servers/${serverId}`, { method: 'DELETE' })
+        if (response.ok) {
+          await fetchServers()
+          setIsDetailModalOpen(false)
+        }
+      } catch (error) {
+        console.error('Delete error:', error)
+      }
     }
   }
 
@@ -96,7 +139,11 @@ export default function Monitoring() {
 
       <div id="monitoring-content">
 
-      {/* Servers table */}
+      {loading ? (
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Yükleniyor...</p>
+        </div>
+      ) : (
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
         <div className="px-4 py-5 sm:p-6">
           <div className="overflow-x-auto">
@@ -141,46 +188,46 @@ export default function Monitoring() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {server.ipAddress}
+                      {server.ip_address}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         server.status === 'online' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                       }`}>
-                        {server.status === 'online' ? 'Çevrimiçi' : 'Çevrimişdışı'}
+                        {server.status === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                           <div 
-                            className={`h-2 rounded-full ${server.cpu > 80 ? 'bg-red-600' : server.cpu > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
-                            style={{ width: `${server.cpu}%` }}
+                            className={`h-2 rounded-full ${server.cpu_usage > 80 ? 'bg-red-600' : server.cpu_usage > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                            style={{ width: `${server.cpu_usage}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm text-gray-900 dark:text-white">{server.cpu}%</span>
+                        <span className="text-sm text-gray-900 dark:text-white">{server.cpu_usage}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                           <div 
-                            className={`h-2 rounded-full ${server.memory > 80 ? 'bg-red-600' : server.memory > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
-                            style={{ width: `${server.memory}%` }}
+                            className={`h-2 rounded-full ${server.memory_usage > 80 ? 'bg-red-600' : server.memory_usage > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                            style={{ width: `${server.memory_usage}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm text-gray-900 dark:text-white">{server.memory}%</span>
+                        <span className="text-sm text-gray-900 dark:text-white">{server.memory_usage}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                           <div 
-                            className={`h-2 rounded-full ${server.disk > 80 ? 'bg-red-600' : server.disk > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
-                            style={{ width: `${server.disk}%` }}
+                            className={`h-2 rounded-full ${server.disk_usage > 80 ? 'bg-red-600' : server.disk_usage > 60 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                            style={{ width: `${server.disk_usage}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm text-gray-900 dark:text-white">{server.disk}%</span>
+                        <span className="text-sm text-gray-900 dark:text-white">{server.disk_usage}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -212,6 +259,7 @@ export default function Monitoring() {
           </div>
         </div>
       </div>
+      )}
       </div>
       
       {/* New Server Modal */}
@@ -333,8 +381,8 @@ export default function Monitoring() {
                 </label>
                 <input
                   type="text"
-                  value={editingServer.ipAddress}
-                  onChange={(e) => setEditingServer({...editingServer, ipAddress: e.target.value})}
+                  value={editingServer.ip_address}
+                  onChange={(e) => setEditingServer({...editingServer, ip_address: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -349,7 +397,7 @@ export default function Monitoring() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="online">Çevrimiçi</option>
-                  <option value="offline">Çevrimişdışı</option>
+                  <option value="offline">Çevrimdışı</option>
                 </select>
               </div>
             </div>
@@ -359,7 +407,7 @@ export default function Monitoring() {
         <ModalFooter>
           <button
             onClick={handleUpdateServer}
-            disabled={!editingServer?.name?.trim() || !editingServer?.ipAddress?.trim()}
+            disabled={!editingServer?.name?.trim() || !editingServer?.ip_address?.trim()}
             className="w-full sm:w-auto inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3"
           >
             Değişiklikleri Kaydet
@@ -382,11 +430,11 @@ export default function Monitoring() {
         fields={[
           { key: 'id', label: 'ID' },
           { key: 'name', label: 'Sunucu Adı' },
-          { key: 'ipAddress', label: 'IP Adresi' },
+          { key: 'ip_address', label: 'IP Adresi' },
           { key: 'status', label: 'Durum' },
-          { key: 'cpu', label: 'CPU Kullanımı (%)' },
-          { key: 'memory', label: 'Bellek Kullanımı (%)' },
-          { key: 'disk', label: 'Disk Kullanımı (%)' },
+          { key: 'cpu_usage', label: 'CPU Kullanımı (%)' },
+          { key: 'memory_usage', label: 'Bellek Kullanımı (%)' },
+          { key: 'disk_usage', label: 'Disk Kullanımı (%)' },
         ]}
         onEdit={() => {
           setEditingServer(viewingServer)
