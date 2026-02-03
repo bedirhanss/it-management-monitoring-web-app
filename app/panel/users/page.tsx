@@ -1,7 +1,7 @@
 'use client'
 
 import { UsersIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
@@ -19,29 +19,33 @@ export default function Users() {
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: 'Kullanıcı',
-    status: 'Aktif'
+    password: '',
+    role: 'user',
+    status: 'active'
   })
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users')
+      const data = await response.json()
+      if (response.ok) {
+        setAllUsers(data.users)
+      } else {
+        alert(data.error || 'Kullanıcılar yüklenemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    } finally {
+      setLoading(false)
+    }
+  }
   
-  const allUsers = [
-    { id: 1, name: 'Ahmet Yılmaz', email: 'ahmet@company.com', role: 'Admin', status: 'Aktif' },
-    { id: 2, name: 'Ayşe Demir', email: 'ayse@company.com', role: 'Teknisyen', status: 'Aktif' },
-    { id: 3, name: 'Mehmet Kaya', email: 'mehmet@company.com', role: 'Kullanıcı', status: 'Pasif' },
-    { id: 4, name: 'Fatma Özkan', email: 'fatma@company.com', role: 'Teknisyen', status: 'Aktif' },
-    { id: 5, name: 'Ali Veli', email: 'ali@company.com', role: 'Kullanıcı', status: 'Aktif' },
-    { id: 6, name: 'Zeynep Ak', email: 'zeynep@company.com', role: 'Admin', status: 'Aktif' },
-    { id: 7, name: 'Murat Çelik', email: 'murat@company.com', role: 'Teknisyen', status: 'Pasif' },
-    { id: 8, name: 'Elif Yıldız', email: 'elif@company.com', role: 'Kullanıcı', status: 'Aktif' },
-    { id: 9, name: 'Burak Kara', email: 'burak@company.com', role: 'Teknisyen', status: 'Aktif' },
-    { id: 10, name: 'Seda Gül', email: 'seda@company.com', role: 'Kullanıcı', status: 'Pasif' },
-    { id: 11, name: 'Can Demir', email: 'can@company.com', role: 'Kullanıcı', status: 'Aktif' },
-    { id: 12, name: 'Deniz Aydın', email: 'deniz@company.com', role: 'Admin', status: 'Aktif' },
-    { id: 13, name: 'Ece Kaya', email: 'ece@company.com', role: 'Teknisyen', status: 'Pasif' },
-    { id: 14, name: 'Furkan Yılmaz', email: 'furkan@company.com', role: 'Kullanıcı', status: 'Aktif' },
-    { id: 15, name: 'Gül Özkan', email: 'gul@company.com', role: 'Teknisyen', status: 'Aktif' },
-  ]
-  
-  // Filtreleme ve arama
   const filteredUsers = allUsers.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchValue.toLowerCase()) || 
                          user.email.toLowerCase().includes(searchValue.toLowerCase())
@@ -50,9 +54,9 @@ export default function Users() {
   })
   
   const filterOptions = [
-    { value: 'Admin', label: 'Admin', count: allUsers.filter(u => u.role === 'Admin').length },
-    { value: 'Teknisyen', label: 'Teknisyen', count: allUsers.filter(u => u.role === 'Teknisyen').length },
-    { value: 'Kullanıcı', label: 'Kullanıcı', count: allUsers.filter(u => u.role === 'Kullanıcı').length },
+    { value: 'admin', label: 'Admin', count: allUsers.filter(u => u.role === 'admin').length },
+    { value: 'technician', label: 'Teknisyen', count: allUsers.filter(u => u.role === 'technician').length },
+    { value: 'user', label: 'Kullanıcı', count: allUsers.filter(u => u.role === 'user').length },
   ]
   
   const {
@@ -66,11 +70,25 @@ export default function Users() {
   
   const users = filteredUsers.slice(startIndex, endIndex)
 
-  const handleCreateUser = () => {
-    // Kullanıcı oluşturma işlemi burada yapılacak
-    console.log('Yeni kullanıcı:', newUser)
-    setIsModalOpen(false)
-    setNewUser({ name: '', email: '', role: 'Kullanıcı', status: 'Aktif' })
+  const handleCreateUser = async () => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Kullanıcı başarıyla oluşturuldu')
+        setIsModalOpen(false)
+        setNewUser({ name: '', email: '', password: '', role: 'user', status: 'active' })
+        fetchUsers()
+      } else {
+        alert(data.error || 'Kullanıcı oluşturulamadı')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    }
   }
 
   const handleEditUser = (user) => {
@@ -78,16 +96,60 @@ export default function Users() {
     setIsEditModalOpen(true)
   }
 
-  const handleUpdateUser = () => {
-    // Kullanıcı güncelleme işlemi burada yapılacak
-    console.log('Güncellenen kullanıcı:', editingUser)
-    setIsEditModalOpen(false)
-    setEditingUser(null)
+  const handleUpdateUser = async () => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingUser)
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Kullanıcı başarıyla güncellendi')
+        setIsEditModalOpen(false)
+        setEditingUser(null)
+        fetchUsers()
+      } else {
+        alert(data.error || 'Kullanıcı güncellenemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    }
   }
 
   const handleViewUser = (user: any) => {
     setViewingUser(user)
     setIsDetailModalOpen(true)
+  }
+
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) return
+    
+    try {
+      const response = await fetch(`/api/users?id=${userId}`, { method: 'DELETE' })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Kullanıcı başarıyla silindi')
+        fetchUsers()
+      } else {
+        alert(data.error || 'Kullanıcı silinemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    }
+  }
+
+  const getRoleLabel = (role: string) => {
+    const roles: any = { admin: 'Admin', technician: 'Teknisyen', user: 'Kullanıcı' }
+    return roles[role] || role
+  }
+
+  const getStatusLabel = (status: string) => {
+    return status === 'active' ? 'Aktif' : 'Pasif'
+  }
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
   }
 
   return (
@@ -159,14 +221,14 @@ export default function Users() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                        {user.role}
+                        {getRoleLabel(user.role)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.status === 'Aktif' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                       }`}>
-                        {user.status}
+                        {getStatusLabel(user.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -176,7 +238,12 @@ export default function Users() {
                       >
                         Düzenle
                       </button>
-                      <button className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Sil</button>
+                      <button 
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                      >
+                        Sil
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <button
@@ -247,9 +314,9 @@ export default function Users() {
                 onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Kullanıcı">Kullanıcı</option>
-                <option value="Teknisyen">Teknisyen</option>
-                <option value="Admin">Admin</option>
+                <option value="user">Kullanıcı</option>
+                <option value="technician">Teknisyen</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
             
@@ -262,8 +329,8 @@ export default function Users() {
                 onChange={(e) => setNewUser({...newUser, status: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Aktif">Aktif</option>
-                <option value="Pasif">Pasif</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Pasif</option>
               </select>
             </div>
             
@@ -273,6 +340,8 @@ export default function Users() {
               </label>
               <input
                 type="password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Kullanıcı için geçici şifre belirleyin"
               />
@@ -347,9 +416,9 @@ export default function Users() {
                   onChange={(e) => setEditingUser({...editingUser, role: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="Kullanıcı">Kullanıcı</option>
-                  <option value="Teknisyen">Teknisyen</option>
-                  <option value="Admin">Admin</option>
+                  <option value="user">Kullanıcı</option>
+                  <option value="technician">Teknisyen</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
               
@@ -362,8 +431,8 @@ export default function Users() {
                   onChange={(e) => setEditingUser({...editingUser, status: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="Aktif">Aktif</option>
-                  <option value="Pasif">Pasif</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Pasif</option>
                 </select>
               </div>
               
@@ -413,9 +482,8 @@ export default function Users() {
           setIsEditModalOpen(true)
         }}
         onDelete={() => {
-          if (confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
-            console.log('Silinen kullanıcı ID:', viewingUser?.id)
-          }
+          setIsDetailModalOpen(false)
+          handleDeleteUser(viewingUser?.id)
         }}
       />
     </>
