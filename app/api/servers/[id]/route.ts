@@ -9,12 +9,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params
-    const { name, ipAddress, status } = await request.json()
+    const { name, ipAddress, status, cpuUsage, memoryUsage, diskUsage } = await request.json()
     const client = await pool.connect()
     
     const result = await client.query(
-      'UPDATE servers SET name = $1, ip_address = $2, status = $3 WHERE id = $4 RETURNING *',
-      [name, ipAddress, status, id]
+      'UPDATE servers SET name = $1, ip_address = $2, status = $3, cpu_usage = $4, memory_usage = $5, disk_usage = $6 WHERE id = $7 RETURNING *',
+      [name, ipAddress, status, cpuUsage, memoryUsage, diskUsage, id]
     )
     client.release()
 

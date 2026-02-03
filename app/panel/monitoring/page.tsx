@@ -16,7 +16,10 @@ export default function Monitoring() {
   const [viewingServer, setViewingServer] = useState<any>(null)
   const [newServer, setNewServer] = useState({
     name: '',
-    ipAddress: ''
+    ipAddress: '',
+    cpuUsage: 0,
+    memoryUsage: 0,
+    diskUsage: 0
   })
   const [allServers, setAllServers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,12 +58,18 @@ export default function Monitoring() {
       const response = await fetch('/api/servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newServer)
+        body: JSON.stringify({
+          name: newServer.name,
+          ipAddress: newServer.ipAddress,
+          cpuUsage: newServer.cpuUsage,
+          memoryUsage: newServer.memoryUsage,
+          diskUsage: newServer.diskUsage
+        })
       })
       if (response.ok) {
         await fetchServers()
         setIsModalOpen(false)
-        setNewServer({ name: '', ipAddress: '' })
+        setNewServer({ name: '', ipAddress: '', cpuUsage: 0, memoryUsage: 0, diskUsage: 0 })
       }
     } catch (error) {
       console.error('Create error:', error)
@@ -80,7 +89,10 @@ export default function Monitoring() {
         body: JSON.stringify({
           name: editingServer.name,
           ipAddress: editingServer.ip_address,
-          status: editingServer.status
+          status: editingServer.status,
+          cpuUsage: editingServer.cpu_usage,
+          memoryUsage: editingServer.memory_usage,
+          diskUsage: editingServer.disk_usage
         })
       })
       if (response.ok) {
@@ -262,14 +274,13 @@ export default function Monitoring() {
       )}
       </div>
       
-      {/* New Server Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Yeni Sistem Ekle"
       >
         <ModalBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Sistem Adı
@@ -296,43 +307,46 @@ export default function Monitoring() {
               />
             </div>
             
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sunucu Tipi
+                CPU Kullanımı (%)
               </label>
-              <select
-                value={newServer.serverType}
-                onChange={(e) => setNewServer({...newServer, serverType: e.target.value})}
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={newServer.cpuUsage}
+                onChange={(e) => setNewServer({...newServer, cpuUsage: parseFloat(e.target.value)})}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Web Server">Web Server</option>
-                <option value="Database Server">Database Server</option>
-                <option value="Mail Server">Mail Server</option>
-                <option value="File Server">File Server</option>
-                <option value="Application Server">Application Server</option>
-                <option value="Backup Server">Backup Server</option>
-              </select>
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Açıklama
-              </label>
-              <textarea
-                value={newServer.description}
-                onChange={(e) => setNewServer({...newServer, description: e.target.value})}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Sunucu hakkında kısa açıklama (opsiyonel)"
               />
             </div>
             
-            <div className="md:col-span-2">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Bilgi:</strong> Sistem eklendikten sonra otomatik olarak izlemeye başlanacak ve performans metrikleri toplanmaya başlayacaktır.
-                </p>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Bellek Kullanımı (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={newServer.memoryUsage}
+                onChange={(e) => setNewServer({...newServer, memoryUsage: parseFloat(e.target.value)})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Disk Kullanımı (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={newServer.diskUsage}
+                onChange={(e) => setNewServer({...newServer, diskUsage: parseFloat(e.target.value)})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
         </ModalBody>
@@ -354,7 +368,6 @@ export default function Monitoring() {
         </ModalFooter>
       </Modal>
       
-      {/* Edit Server Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -362,7 +375,7 @@ export default function Monitoring() {
       >
         <ModalBody>
           {editingServer && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Sistem Adı
@@ -400,6 +413,48 @@ export default function Monitoring() {
                   <option value="offline">Çevrimdışı</option>
                 </select>
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  CPU Kullanımı (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editingServer.cpu_usage}
+                  onChange={(e) => setEditingServer({...editingServer, cpu_usage: parseFloat(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Bellek Kullanımı (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editingServer.memory_usage}
+                  onChange={(e) => setEditingServer({...editingServer, memory_usage: parseFloat(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Disk Kullanımı (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editingServer.disk_usage}
+                  onChange={(e) => setEditingServer({...editingServer, disk_usage: parseFloat(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
           )}
         </ModalBody>
@@ -421,7 +476,6 @@ export default function Monitoring() {
         </ModalFooter>
       </Modal>
       
-      {/* View Modal */}
       <ViewModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}

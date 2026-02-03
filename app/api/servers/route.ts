@@ -26,12 +26,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
     }
 
-    const { name, ipAddress } = await request.json()
+    const { name, ipAddress, cpuUsage, memoryUsage, diskUsage } = await request.json()
 
     const client = await pool.connect()
     const result = await client.query(
-      'INSERT INTO servers (name, ip_address, status) VALUES ($1, $2, $3) RETURNING *',
-      [name, ipAddress, 'online']
+      'INSERT INTO servers (name, ip_address, status, cpu_usage, memory_usage, disk_usage) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name, ipAddress, 'online', cpuUsage || 0, memoryUsage || 0, diskUsage || 0]
     )
     client.release()
 
