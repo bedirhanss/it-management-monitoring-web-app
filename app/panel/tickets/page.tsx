@@ -240,16 +240,8 @@ export default function Tickets() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate" title={ticket.description}>
-                          {ticket.description}
-                        </div>
-                        <button 
-                          onClick={() => handleViewTicket(ticket)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs underline flex-shrink-0"
-                        >
-                          daha fazla
-                        </button>
+                      <div className="text-sm text-gray-900 dark:text-white" title={ticket.description}>
+                        {ticket.description?.length > 50 ? ticket.description.substring(0, 50) + '...' : ticket.description}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
