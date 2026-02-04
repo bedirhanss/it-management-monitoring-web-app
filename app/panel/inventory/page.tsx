@@ -1,7 +1,7 @@
 'use client'
 
 import { PlusIcon, ComputerDesktopIcon, PrinterIcon, ServerIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
@@ -27,18 +27,32 @@ export default function Inventory() {
     purchaseDate: '',
     warrantyPeriod: '1'
   })
-  
-  const allItems = [
-    { id: 1, name: 'Dell OptiPlex 7090', type: 'Bilgisayar', brand: 'Dell', model: 'OptiPlex 7090', serialNumber: 'DL001234', location: 'IT Ofis', status: 'Aktif', purchaseDate: '2023-01-15', warranty: '2026-01-15' },
-    { id: 2, name: 'HP LaserJet Pro', type: 'Yazıcı', brand: 'HP', model: 'LaserJet Pro M404n', serialNumber: 'HP567890', location: 'Muhasebe', status: 'Aktif', purchaseDate: '2023-03-20', warranty: '2025-03-20' },
-    { id: 3, name: 'Cisco Switch 24P', type: 'Network', brand: 'Cisco', model: 'SG220-26', serialNumber: 'CS789012', location: 'Server Odası', status: 'Aktif', purchaseDate: '2022-11-10', warranty: '2025-11-10' },
-    { id: 4, name: 'MacBook Pro 13"', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro M2', serialNumber: 'AP345678', location: 'Tasarım', status: 'Bakımda', purchaseDate: '2023-06-05', warranty: '2026-06-05' },
-    { id: 5, name: 'Samsung Monitor', type: 'Monitör', brand: 'Samsung', model: '27" Curved', serialNumber: 'SM901234', location: 'Geliştirme', status: 'Aktif', purchaseDate: '2023-02-12', warranty: '2026-02-12' },
-  ]
+  const [allItems, setAllItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchInventory()
+  }, [])
+
+  const fetchInventory = async () => {
+    try {
+      const response = await fetch('/api/inventory')
+      const data = await response.json()
+      if (response.ok) {
+        setAllItems(data.inventory)
+      } else {
+        alert(data.error || 'Envanter yüklenemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    } finally {
+      setLoading(false)
+    }
+  }
   
   const filteredItems = allItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchValue.toLowerCase()) || 
-                         item.serialNumber.toLowerCase().includes(searchValue.toLowerCase())
+                         item.serial_number?.toLowerCase().includes(searchValue.toLowerCase())
     const matchesFilter = selectedFilter === 'all' || item.type === selectedFilter
     return matchesSearch && matchesFilter
   })
@@ -77,12 +91,26 @@ export default function Inventory() {
     return warrantyEnd.toISOString().split('T')[0]
   }
 
-  const handleCreateItem = () => {
+  const handleCreateItem = async () => {
     const warrantyEndDate = calculateWarrantyEndDate(newItem.purchaseDate, newItem.warrantyPeriod)
-    const itemWithWarranty = { ...newItem, warranty: warrantyEndDate }
-    console.log('Yeni envanter:', itemWithWarranty)
-    setIsModalOpen(false)
-    setNewItem({ name: '', type: 'Bilgisayar', brand: '', model: '', serialNumber: '', location: '', status: 'Aktif', purchaseDate: '', warrantyPeriod: '1' })
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newItem, warrantyEndDate })
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Envanter başarıyla eklendi')
+        setIsModalOpen(false)
+        setNewItem({ name: '', type: 'Bilgisayar', brand: '', model: '', serialNumber: '', location: '', status: 'Aktif', purchaseDate: '', warrantyPeriod: '1' })
+        fetchInventory()
+      } else {
+        alert(data.error || 'Envanter eklenemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    }
   }
 
   const handleEditItem = (item: any) => {
@@ -90,21 +118,51 @@ export default function Inventory() {
     setIsEditModalOpen(true)
   }
 
-  const handleUpdateItem = () => {
-    console.log('Güncellenen envanter:', editingItem)
-    setIsEditModalOpen(false)
-    setEditingItem(null)
+  const handleUpdateItem = async () => {
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingItem)
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Envanter başarıyla güncellendi')
+        setIsEditModalOpen(false)
+        setEditingItem(null)
+        fetchInventory()
+      } else {
+        alert(data.error || 'Envanter güncellenemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    }
   }
 
-  const handleDeleteItem = (itemId: number) => {
-    if (confirm('Bu envanteri silmek istediğinizden emin misiniz?')) {
-      console.log('Silinen envanter ID:', itemId)
+  const handleDeleteItem = async (itemId: number) => {
+    if (!confirm('Bu envanteri silmek istediğinizden emin misiniz?')) return
+    
+    try {
+      const response = await fetch(`/api/inventory?id=${itemId}`, { method: 'DELETE' })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Envanter başarıyla silindi')
+        fetchInventory()
+      } else {
+        alert(data.error || 'Envanter silinemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
     }
   }
 
   const handleViewItem = (item: any) => {
     setViewingItem(item)
     setIsDetailModalOpen(true)
+  }
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
   }
 
   return (
@@ -162,7 +220,7 @@ export default function Inventory() {
                           <div className="text-sm text-gray-900 dark:text-white">{item.brand}</div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">{item.model}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{item.serialNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{item.serial_number}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.location}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -173,7 +231,7 @@ export default function Inventory() {
                             {item.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.warranty}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.warranty_end_date}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button onClick={() => handleEditItem(item)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-4">Düzenle</button>
                           <button onClick={() => handleDeleteItem(item.id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Sil</button>
@@ -304,7 +362,7 @@ export default function Inventory() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Seri Numarası</label>
-                <input type="text" value={editingItem.serialNumber} onChange={(e) => setEditingItem({...editingItem, serialNumber: e.target.value})} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" value={editingItem.serial_number} onChange={(e) => setEditingItem({...editingItem, serial_number: e.target.value})} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lokasyon</label>
@@ -321,7 +379,7 @@ export default function Inventory() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Satın Alma Tarihi</label>
-                <input type="date" value={editingItem.purchaseDate} onChange={(e) => setEditingItem({...editingItem, purchaseDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="date" value={editingItem.purchase_date} onChange={(e) => setEditingItem({...editingItem, purchase_date: e.target.value})} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
           )}
@@ -343,11 +401,11 @@ export default function Inventory() {
           { key: 'type', label: 'Tip' },
           { key: 'brand', label: 'Marka' },
           { key: 'model', label: 'Model' },
-          { key: 'serialNumber', label: 'Seri No' },
+          { key: 'serial_number', label: 'Seri No' },
           { key: 'location', label: 'Lokasyon' },
           { key: 'status', label: 'Durum' },
-          { key: 'purchaseDate', label: 'Satın Alma' },
-          { key: 'warranty', label: 'Garanti' },
+          { key: 'purchase_date', label: 'Satın Alma' },
+          { key: 'warranty_end_date', label: 'Garanti' },
         ]}
         onEdit={() => {
           setEditingItem(viewingItem)
