@@ -2,14 +2,22 @@
 
 import Link from 'next/link'
 import { ChartBarIcon, TicketIcon, ComputerDesktopIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SubHeader from '@/components/SubHeader'
 import { useToastContext } from '@/components/ToastProvider'
+import { SkeletonStats, SkeletonActivity } from '@/components/Skeleton'
 
 export default function Dashboard() {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
   const toast = useToastContext()
+  
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => setLoading(false), 800)
+    return () => clearTimeout(timer)
+  }, [])
   
   const allActivities = [
     { id: 1, message: 'Server-01 yeniden başlatıldı', time: '2 saat önce', type: 'success' },
@@ -50,6 +58,31 @@ export default function Dashboard() {
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
       />
+
+      {loading ? (
+        <>
+          <SkeletonStats count={4} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded animate-shimmer"></div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1 space-y-2">
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-shimmer"></div>
+                      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-shimmer"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <SkeletonActivity count={4} />
+        </>
+      ) : (
+        <>
       {/* Quick stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
@@ -219,6 +252,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+        </>
+      )}
     </>
   )
 }

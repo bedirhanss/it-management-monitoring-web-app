@@ -6,6 +6,7 @@ import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
+import { SkeletonTable, SkeletonStats } from '@/components/Skeleton'
 
 export default function Logs() {
   const [searchValue, setSearchValue] = useState('')
@@ -106,7 +107,25 @@ export default function Logs() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
+    return (
+      <>
+        <SubHeader
+          title="Sistem Logları"
+          description="Sistem aktivitelerini ve hatalarını izleyin"
+          searchPlaceholder="Log ara..."
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          filterOptions={filterOptions}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          refreshButton={{ onClick: () => fetchLogs(true), loading: refreshing }}
+          exportButton={{ table: 'logs' }}
+          printButton={{ targetId: 'logs-content', fileName: 'sistem_loglari_raporu' }}
+        />
+        <SkeletonStats count={4} />
+        <SkeletonTable rows={5} columns={7} />
+      </>
+    )
   }
 
   return (

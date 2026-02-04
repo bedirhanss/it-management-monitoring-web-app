@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
+import { SkeletonTable } from '@/components/Skeleton'
 
 export default function Monitoring() {
   const [searchValue, setSearchValue] = useState('')
@@ -152,9 +153,7 @@ export default function Monitoring() {
       <div id="monitoring-content">
 
       {loading ? (
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">Yükleniyor...</p>
-        </div>
+        <SkeletonTable rows={5} columns={8} />
       ) : (
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
         <div className="px-4 py-5 sm:p-6">

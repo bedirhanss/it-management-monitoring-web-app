@@ -7,6 +7,7 @@ import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
+import { SkeletonTable } from '@/components/Skeleton'
 
 export default function Inventory() {
   const [searchValue, setSearchValue] = useState('')
@@ -162,7 +163,28 @@ export default function Inventory() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
+    return (
+      <>
+        <SubHeader
+          title="Envanter Yönetimi"
+          description="IT varlıklarını takip edin"
+          searchPlaceholder="Envanter ara..."
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          filterOptions={filterOptions}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          actionButton={{
+            label: 'Yeni Envanter',
+            icon: PlusIcon,
+            onClick: () => setIsModalOpen(true)
+          }}
+          exportButton={{ table: 'inventory' }}
+          printButton={{ targetId: 'inventory-content', fileName: 'envanter_raporu' }}
+        />
+        <SkeletonTable rows={5} columns={8} />
+      </>
+    )
   }
 
   return (

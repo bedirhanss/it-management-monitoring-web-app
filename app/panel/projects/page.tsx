@@ -7,6 +7,7 @@ import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
+import { SkeletonTable } from '@/components/Skeleton'
 
 export default function Projects() {
   const [searchValue, setSearchValue] = useState('')
@@ -150,7 +151,28 @@ export default function Projects() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
+    return (
+      <>
+        <SubHeader
+          title="Proje Yönetimi"
+          description="IT projelerini takip edin"
+          searchPlaceholder="Proje ara..."
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          filterOptions={filterOptions}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          actionButton={{
+            label: 'Yeni Proje',
+            icon: PlusIcon,
+            onClick: () => setIsModalOpen(true)
+          }}
+          exportButton={{ table: 'projects' }}
+          printButton={{ targetId: 'projects-content', fileName: 'proje_raporu' }}
+        />
+        <SkeletonTable rows={5} columns={7} />
+      </>
+    )
   }
 
   return (

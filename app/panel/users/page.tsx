@@ -7,6 +7,7 @@ import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
+import { SkeletonTable } from '@/components/Skeleton'
 
 export default function Users() {
   const [searchValue, setSearchValue] = useState('')
@@ -149,7 +150,33 @@ export default function Users() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
+    return (
+      <>
+        <SubHeader
+          title="Kullanıcı Yönetimi"
+          description="Sistem kullanıcılarını yönetin"
+          searchPlaceholder="Kullanıcı ara..."
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          filterOptions={filterOptions}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          actionButton={{
+            label: 'Yeni Kullanıcı',
+            icon: PlusIcon,
+            onClick: () => setIsModalOpen(true)
+          }}
+          exportButton={{
+            table: 'users'
+          }}
+          printButton={{
+            targetId: 'users-content',
+            fileName: 'kullanici_listesi_raporu'
+          }}
+        />
+        <SkeletonTable rows={5} columns={5} />
+      </>
+    )
   }
 
   return (
