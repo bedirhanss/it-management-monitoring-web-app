@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import jwt from 'jsonwebtoken'
+import { createLog, getClientIp } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -44,9 +45,30 @@ export async function POST(request: Request) {
     )
     client.release()
 
+    // Log kaydı oluştur
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'SUCCESS',
+      'Inventory',
+      `Yeni envanter eklendi: ${name}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Tip: ${type}, Seri No: ${serialNumber}`
+    )
+
     return NextResponse.json({ item: result.rows[0] }, { status: 201 })
   } catch (error: any) {
     console.error('Inventory POST error:', error)
+    
+    // Hata logu
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'ERROR',
+      'Inventory',
+      'Envanter ekleme hatası',
+      ipAddress,
+      error.message
+    )
+    
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Bu seri numarası zaten kullanılıyor' }, { status: 400 })
     }
@@ -61,6 +83,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
     const { id, name, type, brand, model, serialNumber, location, status, purchaseDate, warrantyPeriod, warrantyEndDate } = await request.json()
 
     const client = await pool.connect()
@@ -69,6 +92,16 @@ export async function PUT(request: Request) {
       [name, type, brand, model, serialNumber, location, status, purchaseDate, warrantyPeriod, warrantyEndDate, id]
     )
     client.release()
+
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'INFO',
+      'Inventory',
+      `Envanter güncellendi: ${name}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Envanter ID: ${id}`
+    )
 
     return NextResponse.json({ item: result.rows[0] })
   } catch (error) {
@@ -84,12 +117,24 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     const client = await pool.connect()
+    const item = await client.query('SELECT name FROM inventory WHERE id = $1', [id])
     await client.query('DELETE FROM inventory WHERE id = $1', [id])
     client.release()
+
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'WARNING',
+      'Inventory',
+      `Envanter silindi: ${item.rows[0]?.name || id}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Envanter ID: ${id}`
+    )
 
     return NextResponse.json({ message: 'Envanter silindi' })
   } catch (error) {

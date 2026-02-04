@@ -1,7 +1,7 @@
 'use client'
 
 import { MagnifyingGlassIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
 import { usePagination } from '@/lib/usePagination'
@@ -9,32 +9,41 @@ import { usePagination } from '@/lib/usePagination'
 export default function Logs() {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
-  
-  const allLogs = [
-    { id: 1, timestamp: '2024-01-15 14:30:25', level: 'ERROR', source: 'Authentication', message: 'Failed login attempt for user: admin@company.com', ip: '192.168.1.100', details: 'Invalid password provided' },
-    { id: 2, timestamp: '2024-01-15 14:28:15', level: 'INFO', source: 'System', message: 'User logged in successfully', ip: '192.168.1.101', details: 'User: john.doe@company.com' },
-    { id: 3, timestamp: '2024-01-15 14:25:10', level: 'WARNING', source: 'Database', message: 'Connection pool reaching maximum capacity', ip: 'localhost', details: 'Current connections: 95/100' },
-    { id: 4, timestamp: '2024-01-15 14:20:05', level: 'ERROR', source: 'API', message: 'External service timeout', ip: '192.168.1.50', details: 'Service: backup-service, Timeout: 30s' },
-    { id: 5, timestamp: '2024-01-15 14:15:30', level: 'INFO', source: 'Ticket', message: 'New ticket created', ip: '192.168.1.102', details: 'Ticket #1234: Printer issue' },
-    { id: 6, timestamp: '2024-01-15 14:10:45', level: 'SUCCESS', source: 'Backup', message: 'Daily backup completed successfully', ip: 'localhost', details: 'Size: 2.5GB, Duration: 15min' },
-    { id: 7, timestamp: '2024-01-15 14:05:20', level: 'WARNING', source: 'Security', message: 'Multiple failed login attempts detected', ip: '192.168.1.200', details: 'IP blocked for 30 minutes' },
-    { id: 8, timestamp: '2024-01-15 14:00:15', level: 'INFO', source: 'System', message: 'Server maintenance completed', ip: 'localhost', details: 'Downtime: 5 minutes' },
-    { id: 9, timestamp: '2024-01-15 13:55:10', level: 'ERROR', source: 'Email', message: 'SMTP server connection failed', ip: 'localhost', details: 'Unable to send notification emails' },
-    { id: 10, timestamp: '2024-01-15 13:50:05', level: 'INFO', source: 'Monitoring', message: 'Server health check passed', ip: 'localhost', details: 'All services running normally' },
-  ]
+  const [allLogs, setAllLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchLogs()
+  }, [])
+
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch('/api/logs')
+      const data = await response.json()
+      if (response.ok) {
+        setAllLogs(data.logs)
+      } else {
+        alert(data.error || 'Loglar yüklenemedi')
+      }
+    } catch (error) {
+      alert('Bir hata oluştu')
+    } finally {
+      setLoading(false)
+    }
+  }
   
   const filteredLogs = allLogs.filter(log => {
-    const matchesSearch = log.message.toLowerCase().includes(searchValue.toLowerCase()) || 
-                         log.source.toLowerCase().includes(searchValue.toLowerCase())
-    const matchesFilter = selectedFilter === 'all' || log.level === selectedFilter
+    const matchesSearch = log.message?.toLowerCase().includes(searchValue.toLowerCase()) || 
+                         log.source?.toLowerCase().includes(searchValue.toLowerCase())
+    const matchesFilter = selectedFilter === 'all' || log.log_level === selectedFilter
     return matchesSearch && matchesFilter
   })
   
   const filterOptions = [
-    { value: 'ERROR', label: 'Hata', count: allLogs.filter(l => l.level === 'ERROR').length },
-    { value: 'WARNING', label: 'Uyarı', count: allLogs.filter(l => l.level === 'WARNING').length },
-    { value: 'INFO', label: 'Bilgi', count: allLogs.filter(l => l.level === 'INFO').length },
-    { value: 'SUCCESS', label: 'Başarılı', count: allLogs.filter(l => l.level === 'SUCCESS').length },
+    { value: 'ERROR', label: 'Hata', count: allLogs.filter(l => l.log_level === 'ERROR').length },
+    { value: 'WARNING', label: 'Uyarı', count: allLogs.filter(l => l.log_level === 'WARNING').length },
+    { value: 'INFO', label: 'Bilgi', count: allLogs.filter(l => l.log_level === 'INFO').length },
+    { value: 'SUCCESS', label: 'Başarılı', count: allLogs.filter(l => l.log_level === 'SUCCESS').length },
   ]
   
   const { currentPage, totalPages, itemsPerPage, startIndex, endIndex, handlePageChange } = usePagination({ totalItems: filteredLogs.length })
@@ -85,6 +94,10 @@ export default function Logs() {
     }
   }
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>
+  }
+
   return (
     <>
       <SubHeader
@@ -112,7 +125,7 @@ export default function Logs() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Hatalar</dt>
                   <dd className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {allLogs.filter(l => l.level === 'ERROR').length}
+                    {allLogs.filter(l => l.log_level === 'ERROR').length}
                   </dd>
                 </dl>
               </div>
@@ -130,7 +143,7 @@ export default function Logs() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Uyarılar</dt>
                   <dd className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {allLogs.filter(l => l.level === 'WARNING').length}
+                    {allLogs.filter(l => l.log_level === 'WARNING').length}
                   </dd>
                 </dl>
               </div>
@@ -148,7 +161,7 @@ export default function Logs() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Bilgi</dt>
                   <dd className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {allLogs.filter(l => l.level === 'INFO').length}
+                    {allLogs.filter(l => l.log_level === 'INFO').length}
                   </dd>
                 </dl>
               </div>
@@ -166,7 +179,7 @@ export default function Logs() {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Başarılı</dt>
                   <dd className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {allLogs.filter(l => l.level === 'SUCCESS').length}
+                    {allLogs.filter(l => l.log_level === 'SUCCESS').length}
                   </dd>
                 </dl>
               </div>
@@ -192,17 +205,17 @@ export default function Logs() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {logs.map((log) => {
-                    const IconComponent = getLogIcon(log.level)
+                    const IconComponent = getLogIcon(log.log_level)
                     return (
                       <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {log.timestamp}
+                          {log.created_at}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <IconComponent className={`h-4 w-4 mr-2 ${getLogColor(log.level)}`} />
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBadgeColor(log.level)}`}>
-                              {log.level}
+                            <IconComponent className={`h-4 w-4 mr-2 ${getLogColor(log.log_level)}`} />
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBadgeColor(log.log_level)}`}>
+                              {log.log_level}
                             </span>
                           </div>
                         </td>
@@ -215,7 +228,7 @@ export default function Logs() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {log.ip}
+                          {log.ip_address}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" title={log.details}>

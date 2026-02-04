@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import pool from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { createLog, getClientIp } from '@/lib/logger'
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,14 @@ export async function POST(request: Request) {
     client.release()
 
     if (result.rows.length === 0) {
+      const ipAddress = getClientIp(request)
+      await createLog(
+        'ERROR',
+        'Authentication',
+        `Başarısız giriş denemesi: ${email}`,
+        ipAddress,
+        'Kullanıcı bulunamadı'
+      )
       return NextResponse.json({ error: 'Geçersiz giriş bilgileri' }, { status: 401 })
     }
 
@@ -26,6 +35,14 @@ export async function POST(request: Request) {
     const isValidPassword = password === 'demo123' || await bcrypt.compare(password, user.password_hash)
 
     if (!isValidPassword) {
+      const ipAddress = getClientIp(request)
+      await createLog(
+        'ERROR',
+        'Authentication',
+        `Yanlış şifre denemesi: ${email}`,
+        ipAddress,
+        'Geçersiz şifre'
+      )
       return NextResponse.json({ error: 'Geçersiz giriş bilgileri' }, { status: 401 })
     }
 
@@ -51,6 +68,16 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       maxAge: 86400
     })
+
+    // Başarılı giriş logu
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'SUCCESS',
+      'Authentication',
+      `Kullanıcı giriş yaptı: ${user.name}`,
+      ipAddress,
+      `Email: ${email}, Rol: ${user.role}`
+    )
 
     return response
 
