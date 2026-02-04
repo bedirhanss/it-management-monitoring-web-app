@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import jwt from 'jsonwebtoken'
+import { createLog, getClientIp } from '@/lib/logger'
 
 // PUT - Ticket güncelle
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,6 +13,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const { id } = await params
     const { title, description, status, priority, assignedTo } = await request.json()
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
     const client = await pool.connect()
     
     const result = await client.query(
@@ -26,6 +28,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Ticket bulunamadı' }, { status: 404 })
     }
+
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'INFO',
+      'Ticket',
+      `Ticket güncellendi: ${title}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Ticket ID: ${id}, Durum: ${status}`
+    )
 
     return NextResponse.json({ ticket: result.rows[0] })
   } catch (error) {
@@ -43,13 +55,25 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     const { id } = await params
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
     const client = await pool.connect()
+    const ticket = await client.query('SELECT title FROM tickets WHERE id = $1', [id])
     const result = await client.query('DELETE FROM tickets WHERE id = $1 RETURNING id', [id])
     client.release()
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Ticket bulunamadı' }, { status: 404 })
     }
+
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'WARNING',
+      'Ticket',
+      `Ticket silindi: ${ticket.rows[0]?.title || id}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Ticket ID: ${id}`
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {

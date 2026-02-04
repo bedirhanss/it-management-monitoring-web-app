@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
+import { createLog, getClientIp } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -35,9 +36,30 @@ export async function POST(request: Request) {
     )
     client.release()
 
+    // Log kaydı
+    const clientIp = getClientIp(request)
+    await createLog(
+      'SUCCESS',
+      'Monitoring',
+      `Yeni sunucu eklendi: ${name}`,
+      clientIp,
+      `IP: ${ipAddress}, CPU: ${cpuUsage}%, RAM: ${memoryUsage}%, Disk: ${diskUsage}%`,
+      result.rows[0].id
+    )
+
     return NextResponse.json({ server: result.rows[0] }, { status: 201 })
   } catch (error) {
     console.error('Servers POST error:', error)
+    
+    const clientIp = getClientIp(request)
+    await createLog(
+      'ERROR',
+      'Monitoring',
+      'Sunucu ekleme hatası',
+      clientIp,
+      error instanceof Error ? error.message : 'Bilinmeyen hata'
+    )
+    
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }

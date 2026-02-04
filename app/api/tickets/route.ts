@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import jwt from 'jsonwebtoken'
+import { createLog, getClientIp } from '@/lib/logger'
 
 // GET - Tüm ticketları getir
 export async function GET(request: Request) {
@@ -53,9 +54,29 @@ export async function POST(request: Request) {
     )
     client.release()
 
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'SUCCESS',
+      'Ticket',
+      `Yeni ticket oluşturuldu: ${title}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Öncelik: ${priority}, Durum: ${status}`
+    )
+
     return NextResponse.json({ ticket: result.rows[0] }, { status: 201 })
   } catch (error) {
     console.error('Tickets POST error:', error)
+    
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'ERROR',
+      'Ticket',
+      'Ticket oluşturma hatası',
+      ipAddress,
+      error instanceof Error ? error.message : 'Bilinmeyen hata'
+    )
+    
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }

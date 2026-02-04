@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import jwt from 'jsonwebtoken'
+import { createLog, getClientIp } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -44,9 +45,29 @@ export async function POST(request: Request) {
     )
     client.release()
 
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'SUCCESS',
+      'Project',
+      `Yeni proje oluşturuldu: ${name}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Öncelik: ${priority}, Bütçe: ${budget}`
+    )
+
     return NextResponse.json({ project: result.rows[0] }, { status: 201 })
   } catch (error) {
     console.error('Projects POST error:', error)
+    
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'ERROR',
+      'Project',
+      'Proje oluşturma hatası',
+      ipAddress,
+      error instanceof Error ? error.message : 'Bilinmeyen hata'
+    )
+    
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }
@@ -58,6 +79,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
     const { id, name, description, status, priority, startDate, endDate, assignedTo, budget } = await request.json()
 
     const client = await pool.connect()
@@ -66,6 +88,16 @@ export async function PUT(request: Request) {
       [name, description, status, priority, startDate, endDate, assignedTo, budget, id]
     )
     client.release()
+
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'INFO',
+      'Project',
+      `Proje güncellendi: ${name}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Proje ID: ${id}, Durum: ${status}`
+    )
 
     return NextResponse.json({ project: result.rows[0] })
   } catch (error) {
@@ -81,12 +113,24 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     const client = await pool.connect()
+    const project = await client.query('SELECT name FROM projects WHERE id = $1', [id])
     await client.query('DELETE FROM projects WHERE id = $1', [id])
     client.release()
+
+    // Log kaydı
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'WARNING',
+      'Project',
+      `Proje silindi: ${project.rows[0]?.name || id}`,
+      ipAddress,
+      `Kullanıcı ID: ${decoded.userId}, Proje ID: ${id}`
+    )
 
     return NextResponse.json({ message: 'Proje silindi' })
   } catch (error) {

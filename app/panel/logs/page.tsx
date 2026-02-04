@@ -4,6 +4,7 @@ import { MagnifyingGlassIcon, ExclamationTriangleIcon, InformationCircleIcon, XC
 import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
+import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 
 export default function Logs() {
@@ -11,6 +12,8 @@ export default function Logs() {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [allLogs, setAllLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [viewingLog, setViewingLog] = useState<any>(null)
 
   useEffect(() => {
     fetchLogs()
@@ -92,6 +95,11 @@ export default function Logs() {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
     }
+  }
+
+  const handleViewLog = (log: any) => {
+    setViewingLog(log)
+    setIsDetailModalOpen(true)
   }
 
   if (loading) {
@@ -201,6 +209,7 @@ export default function Logs() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Mesaj</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">IP</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Detaylar</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Görüntüle</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -235,6 +244,14 @@ export default function Logs() {
                             {log.details}
                           </div>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() => handleViewLog(log)}
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                          >
+                            Görüntüle
+                          </button>
+                        </td>
                       </tr>
                     )
                   })}
@@ -251,6 +268,22 @@ export default function Logs() {
           />
         </div>
       </div>
+
+      <ViewModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={`Log Detayı - ${viewingLog?.log_level}`}
+        data={viewingLog || {}}
+        fields={[
+          { key: 'id', label: 'ID' },
+          { key: 'log_level', label: 'Seviye' },
+          { key: 'source', label: 'Kaynak' },
+          { key: 'message', label: 'Mesaj' },
+          { key: 'ip_address', label: 'IP Adresi' },
+          { key: 'details', label: 'Detaylar' },
+          { key: 'created_at', label: 'Tarih' },
+        ]}
+      />
     </>
   )
 }
