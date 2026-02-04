@@ -363,6 +363,15 @@ export default function Projects() {
           { key: 'end_date', label: 'Bitiş' },
           { key: 'budget', label: 'Bütçe' },
         ]}
+        onEdit={() => {
+          setEditingProject(viewingProject)
+          setIsEditModalOpen(true)
+          setIsDetailModalOpen(false)
+        }}
+        onDelete={() => {
+          setIsDetailModalOpen(false)
+          handleDeleteProject(viewingProject?.id)
+        }}
       />
     </>
   )
