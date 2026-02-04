@@ -10,7 +10,9 @@ export function useToast() {
     type: ToastType,
     title: string,
     message?: string,
-    duration?: number
+    duration?: number,
+    onConfirm?: () => void,
+    onCancel?: () => void
   ) => {
     const id = Math.random().toString(36).substr(2, 9)
     const newToast: Toast = {
@@ -18,7 +20,9 @@ export function useToast() {
       type,
       title,
       message,
-      duration: duration || 5000
+      duration: duration || 5000,
+      onConfirm,
+      onCancel
     }
 
     setToasts(prev => [...prev, newToast])
@@ -45,6 +49,10 @@ export function useToast() {
     return addToast('info', title, message, duration)
   }, [addToast])
 
+  const confirm = useCallback((title: string, message?: string, onConfirm?: () => void, onCancel?: () => void) => {
+    return addToast('confirm', title, message, undefined, onConfirm, onCancel)
+  }, [addToast])
+
   return {
     toasts,
     addToast,
@@ -52,6 +60,7 @@ export function useToast() {
     success,
     error,
     warning,
-    info
+    info,
+    confirm
   }
 }

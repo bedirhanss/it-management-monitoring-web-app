@@ -8,8 +8,10 @@ import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Users() {
+  const toast = useToastContext()
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -38,10 +40,10 @@ export default function Users() {
       if (response.ok) {
         setAllUsers(data.users)
       } else {
-        alert(data.error || 'Kullanıcılar yüklenemedi')
+        toast.error('Hata', data.error || 'Kullanıcılar yüklenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     } finally {
       setLoading(false)
     }
@@ -80,15 +82,15 @@ export default function Users() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert('Kullanıcı başarıyla oluşturuldu')
+        toast.success('Başarılı', 'Kullanıcı başarıyla oluşturuldu')
         setIsModalOpen(false)
         setNewUser({ name: '', email: '', password: '', role: 'user', status: 'active' })
         fetchUsers()
       } else {
-        alert(data.error || 'Kullanıcı oluşturulamadı')
+        toast.error('Hata', data.error || 'Kullanıcı oluşturulamadı')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
@@ -106,15 +108,15 @@ export default function Users() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert('Kullanıcı başarıyla güncellendi')
+        toast.success('Başarılı', 'Kullanıcı başarıyla güncellendi')
         setIsEditModalOpen(false)
         setEditingUser(null)
         fetchUsers()
       } else {
-        alert(data.error || 'Kullanıcı güncellenemedi')
+        toast.error('Hata', data.error || 'Kullanıcı güncellenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
@@ -124,20 +126,24 @@ export default function Users() {
   }
 
   const handleDeleteUser = async (userId: number) => {
-    if (!confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) return
-    
-    try {
-      const response = await fetch(`/api/users?id=${userId}`, { method: 'DELETE' })
-      const data = await response.json()
-      if (response.ok) {
-        alert('Kullanıcı başarıyla silindi')
-        fetchUsers()
-      } else {
-        alert(data.error || 'Kullanıcı silinemedi')
+    toast.confirm(
+      'Silme Onayı',
+      'Bu kullanıcıyı silmek istediğinizden emin misiniz?',
+      async () => {
+        try {
+          const response = await fetch(`/api/users?id=${userId}`, { method: 'DELETE' })
+          const data = await response.json()
+          if (response.ok) {
+            toast.success('Başarılı', 'Kullanıcı başarıyla silindi')
+            fetchUsers()
+          } else {
+            toast.error('Hata', data.error || 'Kullanıcı silinemedi')
+          }
+        } catch (error) {
+          toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+        }
       }
-    } catch (error) {
-      alert('Bir hata oluştu')
-    }
+    )
   }
 
   const getRoleLabel = (role: string) => {

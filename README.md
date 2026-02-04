@@ -9,6 +9,7 @@ IT Helpdesk ve Monitoring servisi için Next.js tabanlı web uygulaması.
 - **Ticket System**: Destek talepleri yönetimi
 - **Monitoring**: Sunucu izleme ve performans takibi
 - **User Management**: Kullanıcı yönetimi
+- **Toast Notifications**: Dinamik bildirim sistemi
 
 ## Teknolojiler
 
@@ -51,7 +52,10 @@ npm run dev
 │   ├── users/          # Kullanıcı yönetimi
 │   └── api/            # API routes
 ├── components/         # Yeniden kullanılabilir bileşenler
+│   ├── Toast.tsx       # Toast notification bileşeni
+│   └── ToastProvider.tsx # Toast context provider
 ├── lib/               # Yardımcı fonksiyonlar
+│   └── useToast.ts    # Toast hook
 ├── database/          # Veritabanı şeması
 └── public/           # Statik dosyalar
 ```
@@ -65,3 +69,32 @@ Bu proje portfolyo ve iş başvurusu amacıyla geliştirilmiştir. Temel IT help
 - Auth sistemi PostgreSQL ile çalışıyor
 - Panel yapısı (/panel/*) oluşturuldu
 - Production-ready hale getirildi
+- Dinamik toast notification sistemi eklendi
+
+### Toast Notification Kullanımı
+
+Detaylı kullanım kılavuzu için [TOAST_USAGE.md](./TOAST_USAGE.md) dosyasına bakın.
+
+Hızlı kullanım:
+```tsx
+import { useToastContext } from '@/components/ToastProvider'
+
+const toast = useToastContext()
+
+// Başarı mesajı
+toast.success('Başarılı', 'İşlem tamamlandı')
+
+// Hata mesajı
+toast.error('Hata', 'Bir sorun oluştu')
+
+// Uyarı mesajı
+toast.warning('Uyarı', 'Dikkat edilmesi gereken durum')
+
+// Bilgi mesajı
+toast.info('Bilgi', 'Bilgilendirme mesajı')
+
+// Onay mesajı (silme işlemleri için)
+toast.confirm('Emin misiniz?', 'Bu işlem geri alınamaz', () => {
+  // Evet butonuna basıldığında çalışacak kod
+})
+```

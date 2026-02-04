@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info'
+export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'confirm'
 
 export interface Toast {
   id: string
@@ -11,6 +11,8 @@ export interface Toast {
   title: string
   message?: string
   duration?: number
+  onConfirm?: () => void
+  onCancel?: () => void
 }
 
 interface ToastItemProps {
@@ -25,11 +27,13 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
   useEffect(() => {
     setIsVisible(true)
     
-    const timer = setTimeout(() => {
-      handleRemove()
-    }, toast.duration || 5000)
+    if (toast.type !== 'confirm') {
+      const timer = setTimeout(() => {
+        handleRemove()
+      }, toast.duration || 5000)
 
-    return () => clearTimeout(timer)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   const handleRemove = () => {
@@ -46,6 +50,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
       case 'error':
         return <XCircleIcon className="h-5 w-5 text-red-500" />
       case 'warning':
+      case 'confirm':
         return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
       case 'info':
         return <InformationCircleIcon className="h-5 w-5 text-blue-500" />
@@ -59,10 +64,25 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
       case 'error':
         return 'border-l-red-500'
       case 'warning':
+      case 'confirm':
         return 'border-l-yellow-500'
       case 'info':
         return 'border-l-blue-500'
     }
+  }
+
+  const handleConfirm = () => {
+    if (toast.onConfirm) {
+      toast.onConfirm()
+    }
+    handleRemove()
+  }
+
+  const handleCancel = () => {
+    if (toast.onCancel) {
+      toast.onCancel()
+    }
+    handleRemove()
   }
 
   return (
@@ -87,10 +107,26 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
                 {toast.message}
               </p>
             )}
+            {toast.type === 'confirm' && (
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={handleConfirm}
+                  className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors"
+                >
+                  Evet
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="flex-1 px-3 py-1.5 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-white text-sm font-medium rounded transition-colors"
+                >
+                  Hayır
+                </button>
+              </div>
+            )}
           </div>
           <div className="ml-4 flex-shrink-0">
             <button
-              onClick={handleRemove}
+              onClick={toast.type === 'confirm' ? handleCancel : handleRemove}
               className="inline-flex text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <XMarkIcon className="h-4 w-4" />

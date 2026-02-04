@@ -9,6 +9,7 @@ interface ToastContextType {
   error: (title: string, message?: string, duration?: number) => string
   warning: (title: string, message?: string, duration?: number) => string
   info: (title: string, message?: string, duration?: number) => string
+  confirm: (title: string, message?: string, onConfirm?: () => void, onCancel?: () => void) => string
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
@@ -26,10 +27,10 @@ interface ToastProviderProps {
 }
 
 export default function ToastProvider({ children }: ToastProviderProps) {
-  const { toasts, removeToast, success, error, warning, info } = useToast()
+  const { toasts, removeToast, success, error, warning, info, confirm } = useToast()
 
   return (
-    <ToastContext.Provider value={{ success, error, warning, info }}>
+    <ToastContext.Provider value={{ success, error, warning, info, confirm }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </ToastContext.Provider>

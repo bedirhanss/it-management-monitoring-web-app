@@ -8,8 +8,10 @@ import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Tickets() {
+  const toast = useToastContext()
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -39,9 +41,12 @@ export default function Tickets() {
       if (response.ok) {
         const data = await response.json()
         setAllTickets(data.tickets)
+      } else {
+        toast.error('Hata', 'Ticketlar yüklenirken bir hata oluştu')
       }
     } catch (error) {
       console.error('Fetch error:', error)
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     } finally {
       setLoading(false)
     }
@@ -104,9 +109,13 @@ export default function Tickets() {
         await fetchTickets()
         setIsModalOpen(false)
         setNewTicket({ title: '', description: '', priority: 'medium', status: 'open', assignedTo: '' })
+        toast.success('Başarılı', 'Ticket başarıyla oluşturuldu')
+      } else {
+        toast.error('Hata', 'Ticket oluşturulurken bir hata oluştu')
       }
     } catch (error) {
       console.error('Create error:', error)
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
@@ -136,24 +145,36 @@ export default function Tickets() {
         await fetchTickets()
         setIsEditModalOpen(false)
         setEditingTicket(null)
+        toast.success('Başarılı', 'Ticket başarıyla güncellendi')
+      } else {
+        toast.error('Hata', 'Ticket güncellenirken bir hata oluştu')
       }
     } catch (error) {
       console.error('Update error:', error)
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
   const handleDeleteTicket = async (ticketId: number) => {
-    if (confirm('Bu ticketi silmek istediğinizden emin misiniz?')) {
-      try {
-        const response = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' })
-        if (response.ok) {
-          await fetchTickets()
-          setIsDetailModalOpen(false)
+    toast.confirm(
+      'Silme Onayı',
+      'Bu ticketi silmek istediğinizden emin misiniz?',
+      async () => {
+        try {
+          const response = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' })
+          if (response.ok) {
+            await fetchTickets()
+            setIsDetailModalOpen(false)
+            toast.success('Başarılı', 'Ticket başarıyla silindi')
+          } else {
+            toast.error('Hata', 'Ticket silinirken bir hata oluştu')
+          }
+        } catch (error) {
+          console.error('Delete error:', error)
+          toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
         }
-      } catch (error) {
-        console.error('Delete error:', error)
       }
-    }
+    )
   }
 
   const handleViewTicket = (ticket: any) => {

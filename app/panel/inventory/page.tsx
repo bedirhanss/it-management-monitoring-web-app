@@ -8,8 +8,10 @@ import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Inventory() {
+  const toast = useToastContext()
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -42,10 +44,10 @@ export default function Inventory() {
       if (response.ok) {
         setAllItems(data.inventory)
       } else {
-        alert(data.error || 'Envanter yüklenemedi')
+        toast.error('Hata', data.error || 'Envanter yüklenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     } finally {
       setLoading(false)
     }
@@ -102,15 +104,15 @@ export default function Inventory() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert('Envanter başarıyla eklendi')
+        toast.success('Başarılı', 'Envanter başarıyla eklendi')
         setIsModalOpen(false)
         setNewItem({ name: '', type: 'Bilgisayar', brand: '', model: '', serialNumber: '', location: '', status: 'Aktif', purchaseDate: '', warrantyPeriod: '1' })
         fetchInventory()
       } else {
-        alert(data.error || 'Envanter eklenemedi')
+        toast.error('Hata', data.error || 'Envanter eklenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
@@ -128,33 +130,37 @@ export default function Inventory() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert('Envanter başarıyla güncellendi')
+        toast.success('Başarılı', 'Envanter başarıyla güncellendi')
         setIsEditModalOpen(false)
         setEditingItem(null)
         fetchInventory()
       } else {
-        alert(data.error || 'Envanter güncellenemedi')
+        toast.error('Hata', data.error || 'Envanter güncellenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
   const handleDeleteItem = async (itemId: number) => {
-    if (!confirm('Bu envanteri silmek istediğinizden emin misiniz?')) return
-    
-    try {
-      const response = await fetch(`/api/inventory?id=${itemId}`, { method: 'DELETE' })
-      const data = await response.json()
-      if (response.ok) {
-        alert('Envanter başarıyla silindi')
-        fetchInventory()
-      } else {
-        alert(data.error || 'Envanter silinemedi')
+    toast.confirm(
+      'Silme Onayı',
+      'Bu envanteri silmek istediğinizden emin misiniz?',
+      async () => {
+        try {
+          const response = await fetch(`/api/inventory?id=${itemId}`, { method: 'DELETE' })
+          const data = await response.json()
+          if (response.ok) {
+            toast.success('Başarılı', 'Envanter başarıyla silindi')
+            fetchInventory()
+          } else {
+            toast.error('Hata', data.error || 'Envanter silinemedi')
+          }
+        } catch (error) {
+          toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+        }
       }
-    } catch (error) {
-      alert('Bir hata oluştu')
-    }
+    )
   }
 
   const handleViewItem = (item: any) => {
