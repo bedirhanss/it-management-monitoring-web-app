@@ -6,8 +6,10 @@ import SubHeader from '@/components/SubHeader'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { SkeletonTable } from '@/components/Skeleton'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Monitoring() {
+  const toast = useToastContext()
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -35,9 +37,12 @@ export default function Monitoring() {
       if (response.ok) {
         const data = await response.json()
         setAllServers(data.servers)
+      } else {
+        toast.error('Hata', 'Sunucular yüklenirken bir hata oluştu')
       }
     } catch (error) {
       console.error('Fetch error:', error)
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     } finally {
       setLoading(false)
     }
@@ -71,9 +76,13 @@ export default function Monitoring() {
         await fetchServers()
         setIsModalOpen(false)
         setNewServer({ name: '', ipAddress: '', cpuUsage: 0, memoryUsage: 0, diskUsage: 0 })
+        toast.success('Başarılı', 'Sunucu başarıyla eklendi')
+      } else {
+        toast.error('Hata', 'Sunucu eklenirken bir hata oluştu')
       }
     } catch (error) {
       console.error('Create error:', error)
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
@@ -100,24 +109,36 @@ export default function Monitoring() {
         await fetchServers()
         setIsEditModalOpen(false)
         setEditingServer(null)
+        toast.success('Başarılı', 'Sunucu başarıyla güncellendi')
+      } else {
+        toast.error('Hata', 'Sunucu güncellenirken bir hata oluştu')
       }
     } catch (error) {
       console.error('Update error:', error)
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
   const handleDeleteServer = async (serverId: number) => {
-    if (confirm('Bu sunucuyu silmek istediğinizden emin misiniz?')) {
-      try {
-        const response = await fetch(`/api/servers/${serverId}`, { method: 'DELETE' })
-        if (response.ok) {
-          await fetchServers()
-          setIsDetailModalOpen(false)
+    toast.confirm(
+      'Silme Onayı',
+      'Bu sunucuyu silmek istediğinizden emin misiniz?',
+      async () => {
+        try {
+          const response = await fetch(`/api/servers/${serverId}`, { method: 'DELETE' })
+          if (response.ok) {
+            await fetchServers()
+            setIsDetailModalOpen(false)
+            toast.success('Başarılı', 'Sunucu başarıyla silindi')
+          } else {
+            toast.error('Hata', 'Sunucu silinirken bir hata oluştu')
+          }
+        } catch (error) {
+          console.error('Delete error:', error)
+          toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
         }
-      } catch (error) {
-        console.error('Delete error:', error)
       }
-    }
+    )
   }
 
   const handleViewServer = (server: any) => {

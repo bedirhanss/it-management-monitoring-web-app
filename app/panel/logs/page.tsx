@@ -7,8 +7,10 @@ import SubHeader from '@/components/SubHeader'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable, SkeletonStats } from '@/components/Skeleton'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Logs() {
+  const toast = useToastContext()
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [allLogs, setAllLogs] = useState<any[]>([])
@@ -28,11 +30,12 @@ export default function Logs() {
       const data = await response.json()
       if (response.ok) {
         setAllLogs(data.logs)
+        if (isRefresh) toast.success('Yenilendi', 'Loglar başarıyla yenilendi')
       } else {
-        alert(data.error || 'Loglar yüklenemedi')
+        toast.error('Hata', data.error || 'Loglar yüklenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     } finally {
       setLoading(false)
       if (isRefresh) setRefreshing(false)

@@ -8,8 +8,10 @@ import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Projects() {
+  const toast = useToastContext()
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -43,10 +45,10 @@ export default function Projects() {
       if (response.ok) {
         setAllProjects(data.projects)
       } else {
-        alert(data.error || 'Projeler yüklenemedi')
+        toast.error('Hata', data.error || 'Projeler yüklenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     } finally {
       setLoading(false)
     }
@@ -90,15 +92,15 @@ export default function Projects() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert('Proje başarıyla oluşturuldu')
+        toast.success('Başarılı', 'Proje başarıyla oluşturuldu')
         setIsModalOpen(false)
         setNewProject({ name: '', description: '', status: 'Planlama', priority: 'Orta', startDate: '', endDate: '', assignedTo: '', budget: '' })
         fetchProjects()
       } else {
-        alert(data.error || 'Proje oluşturulamadı')
+        toast.error('Hata', data.error || 'Proje oluşturulamadı')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
@@ -116,33 +118,37 @@ export default function Projects() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert('Proje başarıyla güncellendi')
+        toast.success('Başarılı', 'Proje başarıyla güncellendi')
         setIsEditModalOpen(false)
         setEditingProject(null)
         fetchProjects()
       } else {
-        alert(data.error || 'Proje güncellenemedi')
+        toast.error('Hata', data.error || 'Proje güncellenemedi')
       }
     } catch (error) {
-      alert('Bir hata oluştu')
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
     }
   }
 
   const handleDeleteProject = async (projectId: number) => {
-    if (!confirm('Bu projeyi silmek istediğinizden emin misiniz?')) return
-    
-    try {
-      const response = await fetch(`/api/projects?id=${projectId}`, { method: 'DELETE' })
-      const data = await response.json()
-      if (response.ok) {
-        alert('Proje başarıyla silindi')
-        fetchProjects()
-      } else {
-        alert(data.error || 'Proje silinemedi')
+    toast.confirm(
+      'Silme Onayı',
+      'Bu projeyi silmek istediğinizden emin misiniz?',
+      async () => {
+        try {
+          const response = await fetch(`/api/projects?id=${projectId}`, { method: 'DELETE' })
+          const data = await response.json()
+          if (response.ok) {
+            toast.success('Başarılı', 'Proje başarıyla silindi')
+            fetchProjects()
+          } else {
+            toast.error('Hata', data.error || 'Proje silinemedi')
+          }
+        } catch (error) {
+          toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+        }
       }
-    } catch (error) {
-      alert('Bir hata oluştu')
-    }
+    )
   }
 
   const handleViewProject = (project: any) => {
