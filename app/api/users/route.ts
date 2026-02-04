@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { createLog, getClientIp } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -46,9 +47,28 @@ export async function POST(request: Request) {
     )
     client.release()
 
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'SUCCESS',
+      'User',
+      `Yeni kullanıcı oluşturuldu: ${name}`,
+      ipAddress,
+      `Email: ${email}, Rol: ${role}, Durum: ${status}`
+    )
+
     return NextResponse.json({ user: result.rows[0] }, { status: 201 })
   } catch (error: any) {
     console.error('Users POST error:', error)
+    
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'ERROR',
+      'User',
+      'Kullanıcı oluşturma hatası',
+      ipAddress,
+      error.message
+    )
+    
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Bu email adresi zaten kullanılıyor' }, { status: 400 })
     }
@@ -72,6 +92,15 @@ export async function PUT(request: Request) {
     )
     client.release()
 
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'INFO',
+      'User',
+      `Kullanıcı güncellendi: ${name}`,
+      ipAddress,
+      `Kullanıcı ID: ${id}, Email: ${email}, Rol: ${role}`
+    )
+
     return NextResponse.json({ user: result.rows[0] })
   } catch (error) {
     console.error('Users PUT error:', error)
@@ -90,8 +119,18 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id')
 
     const client = await pool.connect()
+    const user = await client.query('SELECT name, email FROM users WHERE id = $1', [id])
     await client.query('DELETE FROM users WHERE id = $1', [id])
     client.release()
+
+    const ipAddress = getClientIp(request)
+    await createLog(
+      'WARNING',
+      'User',
+      `Kullanıcı silindi: ${user.rows[0]?.name || id}`,
+      ipAddress,
+      `Kullanıcı ID: ${id}, Email: ${user.rows[0]?.email}`
+    )
 
     return NextResponse.json({ message: 'Kullanıcı silindi' })
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PrinterIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import ExportButton from './ExportButton'
 
@@ -28,6 +28,14 @@ interface SubHeaderProps {
     table: string
     fileName?: string
   }
+  printButton?: {
+    targetId: string
+    fileName: string
+  }
+  refreshButton?: {
+    onClick: () => void
+    loading?: boolean
+  }
 }
 
 export default function SubHeader({
@@ -40,7 +48,9 @@ export default function SubHeader({
   selectedFilter,
   onFilterChange,
   actionButton,
-  exportButton
+  exportButton,
+  printButton,
+  refreshButton
 }: SubHeaderProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -65,6 +75,18 @@ export default function SubHeader({
             )}
           </div>
           <div className="mt-4 sm:mt-0 flex gap-2">
+            {refreshButton && (
+              <button
+                onClick={refreshButton.onClick}
+                disabled={refreshButton.loading}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className={`h-4 w-4 mr-2 ${refreshButton.loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {refreshButton.loading ? 'Yükleniyor...' : 'Yenile'}
+              </button>
+            )}
             {exportButton && (
               <ExportButton
                 table={exportButton.table}

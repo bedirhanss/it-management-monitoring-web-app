@@ -1,6 +1,6 @@
 'use client'
 
-import { MagnifyingGlassIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import Pagination from '@/components/Pagination'
 import SubHeader from '@/components/SubHeader'
@@ -12,6 +12,7 @@ export default function Logs() {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [allLogs, setAllLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [viewingLog, setViewingLog] = useState<any>(null)
 
@@ -19,8 +20,9 @@ export default function Logs() {
     fetchLogs()
   }, [])
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (isRefresh = false) => {
     try {
+      if (isRefresh) setRefreshing(true)
       const response = await fetch('/api/logs')
       const data = await response.json()
       if (response.ok) {
@@ -32,6 +34,7 @@ export default function Logs() {
       alert('Bir hata oluştu')
     } finally {
       setLoading(false)
+      if (isRefresh) setRefreshing(false)
     }
   }
   
@@ -117,6 +120,7 @@ export default function Logs() {
         filterOptions={filterOptions}
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
+        refreshButton={{ onClick: () => fetchLogs(true), loading: refreshing }}
         exportButton={{ table: 'logs' }}
         printButton={{ targetId: 'logs-content', fileName: 'sistem_loglari_raporu' }}
       />
