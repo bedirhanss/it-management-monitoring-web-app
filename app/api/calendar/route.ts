@@ -33,9 +33,6 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { title, description, eventType, eventDate, startTime, endTime, assignedTo } = body
 
-    console.log('Gelen tarih:', eventDate) // Debug için
-
-    // PostgreSQL DATE tipine timezone olmadan kaydet
     const client = await pool.connect()
     const result = await client.query(
       `INSERT INTO calendar_events (title, description, event_type, event_date, start_time, end_time, assigned_to, created_by)
@@ -44,8 +41,6 @@ export async function POST(request: Request) {
       [title, description, eventType, eventDate, startTime, endTime, assignedTo]
     )
     client.release()
-
-    console.log('Kaydedilen tarih:', result.rows[0].event_date) // Debug için
 
     return NextResponse.json({ event: result.rows[0] })
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { PlusIcon, CalendarIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import SubHeader from '@/components/SubHeader'
@@ -11,6 +11,7 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [viewingDate, setViewingDate] = useState<Date>(new Date())
   const [events, setEvents] = useState<any[]>([])
   const [allUsers, setAllUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -128,13 +129,32 @@ export default function Calendar() {
     })
   }
 
-  const handleDateClick = (day: number) => {
+  const navigateDay = (direction: 'prev' | 'next') => {
+    setViewingDate(prev => {
+      const newDate = new Date(prev)
+      if (direction === 'prev') {
+        newDate.setDate(prev.getDate() - 1)
+      } else {
+        newDate.setDate(prev.getDate() + 1)
+      }
+      // Eğer yeni tarih farklı bir ayda ise, takvim ayını da güncelle
+      if (newDate.getMonth() !== currentDate.getMonth() || newDate.getFullYear() !== currentDate.getFullYear()) {
+        setCurrentDate(new Date(newDate.getFullYear(), newDate.getMonth(), 1))
+      }
+      return newDate
+    })
+  }
+
+  const handleDateClick = (day: number, openModal: boolean = true) => {
     // Timezone sorununu çözmek için local tarih oluştur
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
     const clickedDate = new Date(year, month, day, 12, 0, 0) // Saat 12:00 olarak ayarla
-    setSelectedDate(clickedDate)
-    setIsModalOpen(true)
+    setViewingDate(clickedDate)
+    if (openModal) {
+      setSelectedDate(clickedDate)
+      setIsModalOpen(true)
+    }
   }
 
   const handleCreateEvent = async () => {
@@ -188,17 +208,25 @@ export default function Calendar() {
     // Ayın günleri
     for (let day = 1; day <= daysInMonth; day++) {
       const dayEvents = getEventsForDate(day)
-      const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString()
+      const isSelected = viewingDate.toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString()
       
       days.push(
         <div 
           key={day} 
           className={`h-32 border border-gray-200 dark:border-gray-700 p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
-            isToday ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-white dark:bg-gray-800'
+            isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-white dark:bg-gray-800'
           }`}
-          onClick={() => handleDateClick(day)}
+          onClick={(e) => {
+            if (e.detail === 1) {
+              handleDateClick(day, false)
+            } else if (e.detail === 2) {
+              handleDateClick(day, true)
+            }
+          }}
         >
-          <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+          <div className={`text-sm font-medium mb-1 ${
+            isSelected ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-gray-900 dark:text-white'
+          }`}>
             {day}
           </div>
           <div className="space-y-1">
@@ -224,27 +252,18 @@ export default function Calendar() {
     return days
   }
 
-  const todayEvents = filteredEvents.filter(event => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const todayStr = `${year}-${month}-${day}`
+  const selectedDayEvents = filteredEvents.filter(event => {
+    const year = viewingDate.getFullYear()
+    const month = String(viewingDate.getMonth() + 1).padStart(2, '0')
+    const day = String(viewingDate.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
     
     if (!event.event_date) return false
     const eventDateStr = event.event_date.substring(0, 10)
-    return eventDateStr === todayStr
+    return eventDateStr === dateStr
   })
 
-  const upcomingEvents = filteredEvents.filter(event => {
-    if (!event.event_date) return false
-    const eventDateStr = event.event_date.substring(0, 10)
-    const eventDate = new Date(eventDateStr + 'T12:00:00')
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-    return eventDate > today && eventDate <= nextWeek
-  }).slice(0, 5)
+  const isViewingToday = viewingDate.toDateString() === new Date().toDateString()
 
   return (
     <>
@@ -276,25 +295,47 @@ export default function Calendar() {
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
             {/* Calendar Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {getMonthName(currentDate)} {currentDate.getFullYear()}
-              </h2>
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => navigateMonth('prev')}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  title="Önceki ay"
+                >
+                  ←
+                </button>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white min-w-[150px] text-center">
+                  {getMonthName(currentDate)} {currentDate.getFullYear()}
+                </h2>
+                <button
+                  onClick={() => navigateMonth('next')}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  title="Sonraki ay"
+                >
+                  →
+                </button>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => navigateDay('prev')}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  title="Önceki gün"
                 >
                   ←
                 </button>
                 <button
-                  onClick={() => setCurrentDate(new Date())}
+                  onClick={() => {
+                    const today = new Date()
+                    setViewingDate(today)
+                    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1))
+                  }}
                   className="px-3 py-2 text-sm bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/40"
                 >
-                  Bugün
+                  {viewingDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
                 </button>
                 <button
-                  onClick={() => navigateMonth('next')}
+                  onClick={() => navigateDay('next')}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  title="Sonraki gün"
                 >
                   →
                 </button>
@@ -322,12 +363,24 @@ export default function Calendar() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Today's Events */}
+          {/* Selected Day Events */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Bugünün Etkinlikleri</h3>
-            {todayEvents.length > 0 ? (
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {isViewingToday ? 'Bugünün Etkinlikleri' : viewingDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+              </h3>
+              {!isViewingToday && (
+                <button
+                  onClick={() => setViewingDate(new Date())}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Bugüne dön
+                </button>
+              )}
+            </div>
+            {selectedDayEvents.length > 0 ? (
               <div className="space-y-3">
-                {todayEvents.map(event => (
+                {selectedDayEvents.map(event => (
                   <div key={event.id} className="border-l-4 border-blue-500 pl-3">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
@@ -342,31 +395,9 @@ export default function Calendar() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Bugün için etkinlik yok</p>
-            )}
-          </div>
-
-          {/* Upcoming Events */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Yaklaşan Etkinlikler</h3>
-            {upcomingEvents.length > 0 ? (
-              <div className="space-y-3">
-                {upcomingEvents.map(event => (
-                  <div key={event.id} className="border-l-4 border-gray-300 dark:border-gray-600 pl-3">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
-                      <CalendarIcon className="h-3 w-3 mr-1" />
-                      {event.event_date?.substring(0, 10)}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                      <ClockIcon className="h-3 w-3 mr-1" />
-                      {event.start_time}-{event.end_time}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Yaklaşan etkinlik yok</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                {isViewingToday ? 'Bugün için etkinlik yok' : 'Bu gün için etkinlik yok'}
+              </p>
             )}
           </div>
 
