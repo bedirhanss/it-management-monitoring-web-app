@@ -1,13 +1,21 @@
 'use client'
 
 import { PlusIcon, CalendarIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
+import SubHeader from '@/components/SubHeader'
+import { useToastContext } from '@/components/ToastProvider'
 
 export default function Calendar() {
+  const toast = useToastContext()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [events, setEvents] = useState<any[]>([])
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchValue, setSearchValue] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('all')
   const [newEvent, setNewEvent] = useState({
     title: '',
     description: '',
@@ -17,13 +25,38 @@ export default function Calendar() {
     assignedTo: ''
   })
 
-  const events = [
-    { id: 1, date: '2024-01-15', title: 'Server Bakımı', type: 'Bakım', time: '14:00-16:00', assignedTo: 'Ahmet Yılmaz', description: 'Web sunucusu rutin bakımı' },
-    { id: 2, date: '2024-01-16', title: 'Network Güncelleme', type: 'Güncelleme', time: '09:00-11:00', assignedTo: 'Mehmet Kaya', description: 'Switch firmware güncelleme' },
-    { id: 3, date: '2024-01-18', title: 'Proje Toplantısı', type: 'Toplantı', time: '10:00-12:00', assignedTo: 'Ayşe Demir', description: 'ERP projesi durum toplantısı' },
-    { id: 4, date: '2024-01-20', title: 'Yedekleme Kontrolü', type: 'Kontrol', time: '15:00-17:00', assignedTo: 'Fatma Özkan', description: 'Haftalık yedekleme kontrolü' },
-    { id: 5, date: '2024-01-22', title: 'Güvenlik Taraması', type: 'Güvenlik', time: '13:00-15:00', assignedTo: 'Murat Çelik', description: 'Sistem güvenlik taraması' },
-  ]
+  useEffect(() => {
+    fetchEvents()
+    fetchUsers()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/calendar')
+      if (response.ok) {
+        const data = await response.json()
+        setEvents(data.events || [])
+      } else {
+        toast.error('Hata', 'Etkinlikler yüklenirken bir hata oluştu')
+      }
+    } catch (error) {
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users')
+      if (response.ok) {
+        const data = await response.json()
+        setAllUsers(data.users || [])
+      }
+    } catch (error) {
+      console.error('Users fetch error:', error)
+    }
+  }
 
   const getMonthName = (date: Date) => {
     const months = [
@@ -42,9 +75,28 @@ export default function Calendar() {
     return firstDay === 0 ? 6 : firstDay - 1 // Pazartesi = 0
   }
 
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.title.toLowerCase().includes(searchValue.toLowerCase())
+    const matchesFilter = selectedFilter === 'all' || event.event_type === selectedFilter
+    return matchesSearch && matchesFilter
+  })
+
+  const filterOptions = [
+    { value: 'Bakım', label: 'Bakım', count: events.filter(e => e.event_type === 'Bakım').length },
+    { value: 'Güncelleme', label: 'Güncelleme', count: events.filter(e => e.event_type === 'Güncelleme').length },
+    { value: 'Toplantı', label: 'Toplantı', count: events.filter(e => e.event_type === 'Toplantı').length },
+    { value: 'Kontrol', label: 'Kontrol', count: events.filter(e => e.event_type === 'Kontrol').length },
+    { value: 'Güvenlik', label: 'Güvenlik', count: events.filter(e => e.event_type === 'Güvenlik').length },
+  ]
+
   const getEventsForDate = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return events.filter(event => event.date === dateStr)
+    return filteredEvents.filter(event => {
+      if (!event.event_date) return false
+      // Sadece tarih kısmını al, timezone dönüşümü yapma
+      const eventDateStr = event.event_date.substring(0, 10)
+      return eventDateStr === dateStr
+    })
   }
 
   const getEventTypeColor = (type: string) => {
@@ -77,16 +129,50 @@ export default function Calendar() {
   }
 
   const handleDateClick = (day: number) => {
-    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+    // Timezone sorununu çözmek için local tarih oluştur
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const clickedDate = new Date(year, month, day, 12, 0, 0) // Saat 12:00 olarak ayarla
     setSelectedDate(clickedDate)
     setIsModalOpen(true)
   }
 
-  const handleCreateEvent = () => {
-    console.log('Yeni etkinlik:', newEvent, 'Tarih:', selectedDate)
-    setIsModalOpen(false)
-    setNewEvent({ title: '', description: '', type: 'Bakım', startTime: '', endTime: '', assignedTo: '' })
-    setSelectedDate(null)
+  const handleCreateEvent = async () => {
+    if (!selectedDate) return
+    
+    try {
+      // Timezone sorununu çözmek için local tarih kullanıyoruz
+      const year = selectedDate.getFullYear()
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
+      const day = String(selectedDate.getDate()).padStart(2, '0')
+      const localDate = `${year}-${month}-${day}`
+      
+      const response = await fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newEvent.title,
+          description: newEvent.description,
+          eventType: newEvent.type,
+          eventDate: localDate,
+          startTime: newEvent.startTime,
+          endTime: newEvent.endTime,
+          assignedTo: newEvent.assignedTo || null
+        })
+      })
+      
+      if (response.ok) {
+        await fetchEvents()
+        setIsModalOpen(false)
+        setNewEvent({ title: '', description: '', type: 'Bakım', startTime: '', endTime: '', assignedTo: '' })
+        setSelectedDate(null)
+        toast.success('Başarılı', 'Etkinlik başarıyla oluşturuldu')
+      } else {
+        toast.error('Hata', 'Etkinlik oluşturulurken bir hata oluştu')
+      }
+    } catch (error) {
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+    }
   }
 
   const renderCalendar = () => {
@@ -119,8 +205,8 @@ export default function Calendar() {
             {dayEvents.slice(0, 2).map(event => (
               <div 
                 key={event.id} 
-                className={`text-xs px-2 py-1 rounded truncate ${getEventTypeColor(event.type)}`}
-                title={`${event.title} - ${event.time}`}
+                className={`text-xs px-2 py-1 rounded truncate ${getEventTypeColor(event.event_type)}`}
+                title={`${event.title} - ${event.start_time}-${event.end_time}`}
               >
                 {event.title}
               </div>
@@ -138,34 +224,51 @@ export default function Calendar() {
     return days
   }
 
-  const todayEvents = events.filter(event => {
-    const today = new Date().toISOString().split('T')[0]
-    return event.date === today
+  const todayEvents = filteredEvents.filter(event => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}`
+    
+    if (!event.event_date) return false
+    const eventDateStr = event.event_date.substring(0, 10)
+    return eventDateStr === todayStr
   })
 
-  const upcomingEvents = events.filter(event => {
-    const eventDate = new Date(event.date)
+  const upcomingEvents = filteredEvents.filter(event => {
+    if (!event.event_date) return false
+    const eventDateStr = event.event_date.substring(0, 10)
+    const eventDate = new Date(eventDateStr + 'T12:00:00')
     const today = new Date()
+    today.setHours(0, 0, 0, 0)
     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     return eventDate > today && eventDate <= nextWeek
   }).slice(0, 5)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Takvim</h1>
-          <p className="text-gray-600 dark:text-gray-400">Bakım planları ve etkinlikleri</p>
-        </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Yeni Etkinlik
-        </button>
-      </div>
+    <>
+      <SubHeader
+        title="Takvim"
+        description="Bakım planları ve etkinlikleri"
+        searchPlaceholder="Etkinlik ara..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        filterOptions={filterOptions}
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        actionButton={{
+          label: 'Yeni Etkinlik',
+          icon: PlusIcon,
+          onClick: () => setIsModalOpen(true)
+        }}
+        exportButton={{
+          table: 'calendar_events',
+          fileName: 'takvim_etkinlikleri'
+        }}
+      />
+
+      <div className="space-y-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar */}
@@ -229,11 +332,11 @@ export default function Calendar() {
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                       <ClockIcon className="h-3 w-3 mr-1" />
-                      {event.time}
+                      {event.start_time}-{event.end_time}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                       <UserIcon className="h-3 w-3 mr-1" />
-                      {event.assignedTo}
+                      {event.assigned_to_name || 'Atanmamış'}
                     </div>
                   </div>
                 ))}
@@ -253,11 +356,11 @@ export default function Calendar() {
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                       <CalendarIcon className="h-3 w-3 mr-1" />
-                      {event.date}
+                      {event.event_date?.substring(0, 10)}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                       <ClockIcon className="h-3 w-3 mr-1" />
-                      {event.time}
+                      {event.start_time}-{event.end_time}
                     </div>
                   </div>
                 ))}
@@ -338,11 +441,9 @@ export default function Calendar() {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Sorumlu seçin</option>
-                <option value="Ahmet Yılmaz">Ahmet Yılmaz</option>
-                <option value="Ayşe Demir">Ayşe Demir</option>
-                <option value="Mehmet Kaya">Mehmet Kaya</option>
-                <option value="Fatma Özkan">Fatma Özkan</option>
-                <option value="Murat Çelik">Murat Çelik</option>
+                {allUsers.map(user => (
+                  <option key={user.id} value={user.id}>{user.name}</option>
+                ))}
               </select>
             </div>
             
@@ -387,6 +488,7 @@ export default function Calendar() {
           </button>
         </ModalFooter>
       </Modal>
-    </div>
+      </div>
+    </>
   )
 }
