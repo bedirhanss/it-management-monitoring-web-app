@@ -1,8 +1,9 @@
 'use client'
 
-import { PlusIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, ClockIcon, UserIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
+import ViewModal from '@/components/ViewModal'
 import SubHeader from '@/components/SubHeader'
 import { useToastContext } from '@/components/ToastProvider'
 
@@ -10,6 +11,8 @@ export default function Calendar() {
   const toast = useToastContext()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [viewingDate, setViewingDate] = useState<Date>(new Date())
   const [events, setEvents] = useState<any[]>([])
@@ -17,6 +20,8 @@ export default function Calendar() {
   const [loading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
+  const [editingEvent, setEditingEvent] = useState<any>(null)
+  const [viewingEvent, setViewingEvent] = useState<any>(null)
   const [newEvent, setNewEvent] = useState({
     title: '',
     description: '',
@@ -195,6 +200,75 @@ export default function Calendar() {
     }
   }
 
+  const handleEditEvent = (event: any) => {
+    setEditingEvent({
+      ...event,
+      assignedTo: event.assigned_to || ''
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const handleUpdateEvent = async () => {
+    if (!editingEvent) return
+    
+    try {
+      const response = await fetch(`/api/calendar/${editingEvent.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingEvent.title,
+          description: editingEvent.description,
+          eventType: editingEvent.event_type,
+          eventDate: editingEvent.event_date,
+          startTime: editingEvent.start_time,
+          endTime: editingEvent.end_time,
+          assignedTo: editingEvent.assignedTo || null
+        })
+      })
+      
+      if (response.ok) {
+        await fetchEvents()
+        setIsEditModalOpen(false)
+        setEditingEvent(null)
+        toast.success('Başarılı', 'Etkinlik başarıyla güncellendi')
+      } else {
+        toast.error('Hata', 'Etkinlik güncellenirken bir hata oluştu')
+      }
+    } catch (error) {
+      toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+    }
+  }
+
+  const handleDeleteEvent = async (eventId: number) => {
+    toast.confirm(
+      'Silme Onayı',
+      'Bu etkinliği silmek istediğinizden emin misiniz?',
+      async () => {
+        try {
+          const response = await fetch(`/api/calendar/${eventId}`, { method: 'DELETE' })
+          if (response.ok) {
+            await fetchEvents()
+            toast.success('Başarılı', 'Etkinlik başarıyla silindi')
+          } else {
+            toast.error('Hata', 'Etkinlik silinirken bir hata oluştu')
+          }
+        } catch (error) {
+          toast.error('Bağlantı Hatası', 'Sunucuya bağlanılamadı')
+        }
+      }
+    )
+  }
+
+  const handleViewEvent = (event: any) => {
+    setViewingEvent({
+      ...event,
+      event_date: event.event_date?.substring(0, 10),
+      event_type_label: event.event_type,
+      assigned_to_label: event.assigned_to_name || 'Atanmamış'
+    })
+    setIsViewModalOpen(true)
+  }
+
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate)
     const firstDay = getFirstDayOfMonth(currentDate)
@@ -279,7 +353,10 @@ export default function Calendar() {
         actionButton={{
           label: 'Yeni Etkinlik',
           icon: PlusIcon,
-          onClick: () => setIsModalOpen(true)
+          onClick: () => {
+            setSelectedDate(viewingDate)
+            setIsModalOpen(true)
+          }
         }}
         exportButton={{
           table: 'calendar_events',
@@ -381,15 +458,42 @@ export default function Calendar() {
             {selectedDayEvents.length > 0 ? (
               <div className="space-y-3">
                 {selectedDayEvents.map(event => (
-                  <div key={event.id} className="border-l-4 border-blue-500 pl-3">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
-                      <ClockIcon className="h-3 w-3 mr-1" />
-                      {event.start_time}-{event.end_time}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                      <UserIcon className="h-3 w-3 mr-1" />
-                      {event.assigned_to_name || 'Atanmamış'}
+                  <div key={event.id} className="border-l-4 border-blue-500 pl-3 pr-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-r transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
+                          <ClockIcon className="h-3 w-3 mr-1" />
+                          {event.start_time}-{event.end_time}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                          <UserIcon className="h-3 w-3 mr-1" />
+                          {event.assigned_to_name || 'Atanmamış'}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1 ml-2">
+                        <button
+                          onClick={() => handleViewEvent(event)}
+                          className="p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                          title="Görüntüle"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditEvent(event)}
+                          className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                          title="Düzenle"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                          title="Sil"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -422,8 +526,9 @@ export default function Calendar() {
         onClose={() => {
           setIsModalOpen(false)
           setSelectedDate(null)
+          setNewEvent({ title: '', description: '', type: 'Bakım', startTime: '', endTime: '', assignedTo: '' })
         }} 
-        title={`Yeni Etkinlik ${selectedDate ? `- ${selectedDate.toLocaleDateString('tr-TR')}` : ''}`}
+        title={`Yeni Etkinlik${selectedDate ? ` - ${selectedDate.toLocaleDateString('tr-TR')}` : ''}`}
       >
         <ModalBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -503,7 +608,7 @@ export default function Calendar() {
         <ModalFooter>
           <button 
             onClick={handleCreateEvent} 
-            disabled={!newEvent.title.trim()} 
+            disabled={!newEvent.title.trim() || !selectedDate} 
             className="w-full sm:w-auto inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3"
           >
             Etkinlik Oluştur
@@ -512,6 +617,7 @@ export default function Calendar() {
             onClick={() => {
               setIsModalOpen(false)
               setSelectedDate(null)
+              setNewEvent({ title: '', description: '', type: 'Bakım', startTime: '', endTime: '', assignedTo: '' })
             }} 
             className="mt-3 w-full sm:mt-0 sm:w-auto inline-flex justify-center rounded-md bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
@@ -519,6 +625,136 @@ export default function Calendar() {
           </button>
         </ModalFooter>
       </Modal>
+
+      {/* Edit Event Modal */}
+      <Modal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingEvent(null)
+        }} 
+        title="Etkinliği Düzenle"
+      >
+        <ModalBody>
+          {editingEvent && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Etkinlik Başlığı</label>
+                <input 
+                  type="text" 
+                  value={editingEvent.title} 
+                  onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Açıklama</label>
+                <textarea 
+                  value={editingEvent.description || ''} 
+                  onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})} 
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tür</label>
+                <select 
+                  value={editingEvent.event_type} 
+                  onChange={(e) => setEditingEvent({...editingEvent, event_type: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Bakım">Bakım</option>
+                  <option value="Güncelleme">Güncelleme</option>
+                  <option value="Toplantı">Toplantı</option>
+                  <option value="Kontrol">Kontrol</option>
+                  <option value="Güvenlik">Güvenlik</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sorumlu</label>
+                <select 
+                  value={editingEvent.assignedTo} 
+                  onChange={(e) => setEditingEvent({...editingEvent, assignedTo: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Sorumlu seçin</option>
+                  {allUsers.map(user => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Başlangıç Saati</label>
+                <input 
+                  type="time" 
+                  value={editingEvent.start_time} 
+                  onChange={(e) => setEditingEvent({...editingEvent, start_time: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bitiş Saati</label>
+                <input 
+                  type="time" 
+                  value={editingEvent.end_time} 
+                  onChange={(e) => setEditingEvent({...editingEvent, end_time: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        
+        <ModalFooter>
+          <button 
+            onClick={handleUpdateEvent} 
+            disabled={!editingEvent?.title?.trim()} 
+            className="w-full sm:w-auto inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3"
+          >
+            Değişiklikleri Kaydet
+          </button>
+          <button 
+            onClick={() => {
+              setIsEditModalOpen(false)
+              setEditingEvent(null)
+            }} 
+            className="mt-3 w-full sm:mt-0 sm:w-auto inline-flex justify-center rounded-md bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            İptal
+          </button>
+        </ModalFooter>
+      </Modal>
+
+      {/* View Event Modal */}
+      <ViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title={`Etkinlik Detayı - ${viewingEvent?.title || ''}`}
+        data={viewingEvent || {}}
+        fields={[
+          { key: 'title', label: 'Başlık' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'event_type_label', label: 'Tür' },
+          { key: 'event_date', label: 'Tarih' },
+          { key: 'start_time', label: 'Başlangıç Saati' },
+          { key: 'end_time', label: 'Bitiş Saati' },
+          { key: 'assigned_to_label', label: 'Sorumlu' },
+        ]}
+        onEdit={() => {
+          setEditingEvent(viewingEvent)
+          setIsEditModalOpen(true)
+          setIsViewModalOpen(false)
+        }}
+        onDelete={() => {
+          handleDeleteEvent(viewingEvent?.id)
+          setIsViewModalOpen(false)
+        }}
+      />
       </div>
     </>
   )
