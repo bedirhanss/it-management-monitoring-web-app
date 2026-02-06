@@ -7,6 +7,7 @@ import ViewModal from '@/components/ViewModal'
 import SubHeader from '@/components/SubHeader'
 import { useToastContext } from '@/components/ToastProvider'
 import { SkeletonCard } from '@/components/Skeleton'
+import { formatDate, formatTime } from '@/lib/formatters'
 
 export default function Calendar() {
   const toast = useToastContext()
@@ -263,9 +264,11 @@ export default function Calendar() {
   const handleViewEvent = (event: any) => {
     setViewingEvent({
       ...event,
-      event_date: event.event_date?.substring(0, 10),
+      event_date: formatDate(event.event_date),
       event_type_label: event.event_type,
-      assigned_to_label: event.assigned_to_name || 'Atanmamış'
+      assigned_to_label: event.assigned_to_name || 'Atanmamış',
+      start_time_formatted: formatTime(event.start_time),
+      end_time_formatted: formatTime(event.end_time)
     })
     setIsViewModalOpen(true)
   }
@@ -309,7 +312,7 @@ export default function Calendar() {
               <div 
                 key={event.id} 
                 className={`text-xs px-2 py-1 rounded truncate ${getEventTypeColor(event.event_type)}`}
-                title={`${event.title} - ${event.start_time}-${event.end_time}`}
+                title={`${event.title} - ${formatTime(event.start_time)}-${formatTime(event.end_time)}`}
               >
                 {event.title}
               </div>
@@ -503,7 +506,7 @@ export default function Calendar() {
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                           <ClockIcon className="h-3 w-3 mr-1" />
-                          {event.start_time}-{event.end_time}
+                          {formatTime(event.start_time)}-{formatTime(event.end_time)}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                           <UserIcon className="h-3 w-3 mr-1" />
@@ -780,8 +783,8 @@ export default function Calendar() {
           { key: 'description', label: 'Açıklama' },
           { key: 'event_type_label', label: 'Tür' },
           { key: 'event_date', label: 'Tarih' },
-          { key: 'start_time', label: 'Başlangıç Saati' },
-          { key: 'end_time', label: 'Bitiş Saati' },
+          { key: 'start_time_formatted', label: 'Başlangıç Saati' },
+          { key: 'end_time_formatted', label: 'Bitiş Saati' },
           { key: 'assigned_to_label', label: 'Sorumlu' },
         ]}
         onEdit={() => {

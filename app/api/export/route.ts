@@ -6,10 +6,115 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 })
 
+async function exportAllTables() {
+  const workbook = new ExcelJS.Workbook()
+  const currentDate = new Date().toISOString().split('T')[0]
+
+  // Tickets
+  const ticketsResult = await pool.query(`SELECT t.id, t.title, t.description, t.status, t.priority, u.name as assigned_to, t.created_at::date as created FROM tickets t LEFT JOIN users u ON t.assigned_to = u.id ORDER BY t.created_at DESC`)
+  const ticketsSheet = workbook.addWorksheet('Ticketlar')
+  ticketsSheet.columns = [
+    { header: 'ID', key: 'id', width: 10 },
+    { header: 'Başlık', key: 'title', width: 30 },
+    { header: 'Açıklama', key: 'description', width: 50 },
+    { header: 'Durum', key: 'status', width: 15 },
+    { header: 'Öncelik', key: 'priority', width: 15 },
+    { header: 'Atanan', key: 'assigned_to', width: 20 },
+    { header: 'Oluşturulma', key: 'created', width: 15 },
+  ]
+  ticketsSheet.getRow(1).font = { bold: true }
+  ticketsSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } }
+  ticketsResult.rows.forEach(row => ticketsSheet.addRow(row))
+
+  // Servers
+  const serversResult = await pool.query(`SELECT id, name, ip_address, status, cpu_usage, memory_usage, disk_usage, created_at::date as created FROM servers ORDER BY created_at DESC`)
+  const serversSheet = workbook.addWorksheet('Sunucular')
+  serversSheet.columns = [
+    { header: 'ID', key: 'id', width: 10 },
+    { header: 'Sunucu Adı', key: 'name', width: 25 },
+    { header: 'IP Adresi', key: 'ip_address', width: 20 },
+    { header: 'Durum', key: 'status', width: 15 },
+    { header: 'CPU %', key: 'cpu_usage', width: 10 },
+    { header: 'Bellek %', key: 'memory_usage', width: 10 },
+    { header: 'Disk %', key: 'disk_usage', width: 10 },
+    { header: 'Oluşturulma', key: 'created', width: 15 },
+  ]
+  serversSheet.getRow(1).font = { bold: true }
+  serversSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } }
+  serversResult.rows.forEach(row => serversSheet.addRow(row))
+
+  // Inventory
+  const inventoryResult = await pool.query(`SELECT i.id, i.name, i.type, i.brand, i.model, i.serial_number, i.location, i.status, i.purchase_date, i.warranty_end_date, i.created_at::date as created FROM inventory i ORDER BY i.created_at DESC`)
+  const inventorySheet = workbook.addWorksheet('Envanter')
+  inventorySheet.columns = [
+    { header: 'ID', key: 'id', width: 10 },
+    { header: 'Cihaz Adı', key: 'name', width: 25 },
+    { header: 'Tip', key: 'type', width: 15 },
+    { header: 'Marka', key: 'brand', width: 15 },
+    { header: 'Model', key: 'model', width: 20 },
+    { header: 'Seri No', key: 'serial_number', width: 20 },
+    { header: 'Lokasyon', key: 'location', width: 15 },
+    { header: 'Durum', key: 'status', width: 15 },
+    { header: 'Satın Alma', key: 'purchase_date', width: 15 },
+    { header: 'Garanti Bitiş', key: 'warranty_end_date', width: 15 },
+    { header: 'Oluşturulma', key: 'created', width: 15 },
+  ]
+  inventorySheet.getRow(1).font = { bold: true }
+  inventorySheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } }
+  inventoryResult.rows.forEach(row => inventorySheet.addRow(row))
+
+  // Projects
+  const projectsResult = await pool.query(`SELECT p.id, p.name, p.description, p.status, p.priority, p.start_date, p.end_date, u.name as assigned_to_name, p.budget, p.created_at::date as created FROM projects p LEFT JOIN users u ON p.assigned_to = u.id ORDER BY p.created_at DESC`)
+  const projectsSheet = workbook.addWorksheet('Projeler')
+  projectsSheet.columns = [
+    { header: 'ID', key: 'id', width: 10 },
+    { header: 'Proje Adı', key: 'name', width: 30 },
+    { header: 'Açıklama', key: 'description', width: 40 },
+    { header: 'Durum', key: 'status', width: 15 },
+    { header: 'Öncelik', key: 'priority', width: 15 },
+    { header: 'Başlangıç', key: 'start_date', width: 15 },
+    { header: 'Bitiş', key: 'end_date', width: 15 },
+    { header: 'Sorumlu', key: 'assigned_to_name', width: 20 },
+    { header: 'Bütçe', key: 'budget', width: 15 },
+    { header: 'Oluşturulma', key: 'created', width: 15 },
+  ]
+  projectsSheet.getRow(1).font = { bold: true }
+  projectsSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } }
+  projectsResult.rows.forEach(row => projectsSheet.addRow(row))
+
+  // Logs
+  const logsResult = await pool.query(`SELECT id, log_level, source, message, ip_address, created_at FROM system_logs ORDER BY created_at DESC LIMIT 1000`)
+  const logsSheet = workbook.addWorksheet('Loglar')
+  logsSheet.columns = [
+    { header: 'ID', key: 'id', width: 10 },
+    { header: 'Seviye', key: 'log_level', width: 15 },
+    { header: 'Kaynak', key: 'source', width: 20 },
+    { header: 'Mesaj', key: 'message', width: 50 },
+    { header: 'IP Adresi', key: 'ip_address', width: 20 },
+    { header: 'Zaman', key: 'created_at', width: 20 },
+  ]
+  logsSheet.getRow(1).font = { bold: true }
+  logsSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } }
+  logsResult.rows.forEach(row => logsSheet.addRow(row))
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  return new NextResponse(buffer, {
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="tum_veriler_${currentDate}.xlsx"`,
+    },
+  })
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const table = searchParams.get('table')
+
+    // Tüm tablolar için export
+    if (table === 'all') {
+      return await exportAllTables()
+    }
 
     let data: any[] = []
     let columns: any[] = []

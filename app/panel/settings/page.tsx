@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { UserIcon, CogIcon, EyeIcon, EyeSlashIcon, LockClosedIcon, BellIcon, PaintBrushIcon, CircleStackIcon } from '@heroicons/react/24/outline'
 import { useToastContext } from '@/components/ToastProvider'
 import { SkeletonCard } from '@/components/Skeleton'
+import { useTheme } from '@/lib/theme'
 
 export default function Settings() {
   const toast = useToastContext()
+  const { setThemeMode } = useTheme()
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
@@ -30,10 +32,17 @@ export default function Settings() {
   const [notifications, setNotifications] = useState({
     enabled: true
   })
+  const [appearance, setAppearance] = useState({
+    language: 'tr',
+    dateFormat: 'dd/mm/yyyy',
+    timeFormat: '24',
+    theme: 'auto'
+  })
 
   useEffect(() => {
     fetchUserData()
     loadNotificationSettings()
+    loadAppearanceSettings()
   }, [])
 
   const fetchUserData = async () => {
@@ -63,6 +72,47 @@ export default function Settings() {
       const defaults = { enabled: true }
       setNotifications(defaults)
       localStorage.setItem('notificationSettings', JSON.stringify(defaults))
+    }
+  }
+
+  const loadAppearanceSettings = () => {
+    const saved = localStorage.getItem('appearanceSettings')
+    if (saved) {
+      setAppearance(JSON.parse(saved))
+    } else {
+      const defaults = {
+        language: 'tr',
+        dateFormat: 'dd/mm/yyyy',
+        timeFormat: '24',
+        theme: 'auto'
+      }
+      setAppearance(defaults)
+      localStorage.setItem('appearanceSettings', JSON.stringify(defaults))
+    }
+  }
+
+  const handleAppearanceChange = (key: string, value: string) => {
+    const updated = { ...appearance, [key]: value }
+    setAppearance(updated)
+    localStorage.setItem('appearanceSettings', JSON.stringify(updated))
+    
+    // Tema değişirse hemen uygula
+    if (key === 'theme') {
+      setThemeMode(value as 'light' | 'dark' | 'auto')
+    }
+    
+    toast.success('Kaydedildi', 'Görünüm ayarları güncellendi')
+  }
+
+  const handleExportAll = async () => {
+    try {
+      toast.info('İndiriliyor', 'Tüm veriler hazırlanıyor...')
+      window.location.href = '/api/export?table=all'
+      setTimeout(() => {
+        toast.success('Tamamlandı', 'Tüm veriler başarıyla dışa aktarıldı')
+      }, 1000)
+    } catch (error) {
+      toast.error('Hata', 'Veriler dışa aktarılırken bir hata oluştu')
     }
   }
 
@@ -124,7 +174,7 @@ export default function Settings() {
     { id: 'profile', name: 'Profil', icon: UserIcon },
     { id: 'notifications', name: 'Bildirimler', icon: BellIcon },
     { id: 'appearance', name: 'Görünüm', icon: PaintBrushIcon },
-    { id: 'data', name: 'Veri Yönetimi', icon: CircleStackIcon },
+    { id: 'data', name: 'Dışarı Aktar', icon: CircleStackIcon },
     { id: 'system', name: 'Sistem', icon: CogIcon },
   ]
 
@@ -414,7 +464,11 @@ export default function Settings() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Dil
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <select 
+                    value={appearance.language}
+                    onChange={(e) => handleAppearanceChange('language', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
                     <option value="tr">Türkçe</option>
                     <option value="en">English</option>
                   </select>
@@ -424,7 +478,11 @@ export default function Settings() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Tarih Formatı
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <select 
+                    value={appearance.dateFormat}
+                    onChange={(e) => handleAppearanceChange('dateFormat', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
                     <option value="dd/mm/yyyy">DD/MM/YYYY</option>
                     <option value="mm/dd/yyyy">MM/DD/YYYY</option>
                     <option value="yyyy-mm-dd">YYYY-MM-DD</option>
@@ -435,7 +493,11 @@ export default function Settings() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Saat Formatı
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <select 
+                    value={appearance.timeFormat}
+                    onChange={(e) => handleAppearanceChange('timeFormat', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
                     <option value="24">24 Saat</option>
                     <option value="12">12 Saat (AM/PM)</option>
                   </select>
@@ -443,31 +505,40 @@ export default function Settings() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Sayfa Başına Kayıt Sayısı
-                  </label>
-                  <select className="w-full md:w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tema
+                    Varsayılan Tema
                   </label>
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center">
-                      <input type="radio" name="theme" value="light" className="mr-2" />
+                      <input 
+                        type="radio" 
+                        name="theme" 
+                        value="light" 
+                        checked={appearance.theme === 'light'}
+                        onChange={(e) => handleAppearanceChange('theme', e.target.value)}
+                        className="mr-2" 
+                      />
                       <span className="text-sm text-gray-700 dark:text-gray-300">Açık</span>
                     </label>
                     <label className="flex items-center">
-                      <input type="radio" name="theme" value="dark" className="mr-2" />
+                      <input 
+                        type="radio" 
+                        name="theme" 
+                        value="dark" 
+                        checked={appearance.theme === 'dark'}
+                        onChange={(e) => handleAppearanceChange('theme', e.target.value)}
+                        className="mr-2" 
+                      />
                       <span className="text-sm text-gray-700 dark:text-gray-300">Koyu</span>
                     </label>
                     <label className="flex items-center">
-                      <input type="radio" name="theme" value="auto" defaultChecked className="mr-2" />
+                      <input 
+                        type="radio" 
+                        name="theme" 
+                        value="auto" 
+                        checked={appearance.theme === 'auto'}
+                        onChange={(e) => handleAppearanceChange('theme', e.target.value)}
+                        className="mr-2" 
+                      />
                       <span className="text-sm text-gray-700 dark:text-gray-300">Otomatik</span>
                     </label>
                   </div>
@@ -478,12 +549,27 @@ export default function Settings() {
 
           {activeTab === 'data' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Veri Yönetimi</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Dışarı Aktar</h3>
               
+              {/* Tümünü Aktar */}
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg">
+                <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Tüm Verileri Dışa Aktar</h4>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+                  Tüm tabloları tek bir Excel dosyasında farklı sayfalar halinde indirin.
+                </p>
+                <button
+                  onClick={handleExportAll}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all"
+                >
+                  Tümünü İndir
+                </button>
+              </div>
+
+              {/* Tekil İndirmeler */}
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">Verileri Dışa Aktar</h4>
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">Tekil Tabloları Dışa Aktar</h4>
                 <p className="text-xs text-blue-700 dark:text-blue-300 mb-4">
-                  Tüm verilerinizi Excel formatında dışa aktarabilirsiniz.
+                  Sadece belirli bir tabloyu Excel formatında indirin.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button

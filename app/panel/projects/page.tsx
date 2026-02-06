@@ -9,6 +9,7 @@ import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
 import { useToastContext } from '@/components/ToastProvider'
+import { formatDate } from '@/lib/formatters'
 
 export default function Projects() {
   const toast = useToastContext()
@@ -152,7 +153,11 @@ export default function Projects() {
   }
 
   const handleViewProject = (project: any) => {
-    setViewingProject(project)
+    setViewingProject({
+      ...project,
+      start_date: formatDate(project.start_date),
+      end_date: formatDate(project.end_date)
+    })
     setIsDetailModalOpen(true)
   }
 

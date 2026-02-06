@@ -8,6 +8,7 @@ import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable, SkeletonStats } from '@/components/Skeleton'
 import { useToastContext } from '@/components/ToastProvider'
+import { formatDateTime } from '@/lib/formatters'
 
 export default function Logs() {
   const toast = useToastContext()
@@ -244,7 +245,7 @@ export default function Logs() {
                     return (
                       <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {log.created_at}
+                          {formatDateTime(log.created_at)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">

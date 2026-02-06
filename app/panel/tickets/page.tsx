@@ -9,6 +9,7 @@ import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
 import { useToastContext } from '@/components/ToastProvider'
+import { formatDate } from '@/lib/formatters'
 
 export default function Tickets() {
   const toast = useToastContext()
@@ -182,7 +183,7 @@ export default function Tickets() {
       ...ticket,
       status: statusMap[ticket.status],
       priority: priorityMap[ticket.priority],
-      created: new Date(ticket.created_at).toLocaleDateString('tr-TR')
+      created: formatDate(ticket.created_at)
     })
     setIsDetailModalOpen(true)
   }
@@ -294,7 +295,7 @@ export default function Tickets() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(ticket.created_at).toLocaleDateString('tr-TR')}
+                      {formatDate(ticket.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 

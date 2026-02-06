@@ -9,6 +9,7 @@ import ViewModal from '@/components/ViewModal'
 import { usePagination } from '@/lib/usePagination'
 import { SkeletonTable } from '@/components/Skeleton'
 import { useToastContext } from '@/components/ToastProvider'
+import { formatDate } from '@/lib/formatters'
 
 export default function Inventory() {
   const toast = useToastContext()
@@ -259,7 +260,7 @@ export default function Inventory() {
                             {item.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.warranty_end_date}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{formatDate(item.warranty_end_date)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button onClick={() => handleEditItem(item)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-4">Düzenle</button>
                           <button onClick={() => handleDeleteItem(item.id)} className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Sil</button>
