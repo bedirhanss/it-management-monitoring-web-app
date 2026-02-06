@@ -23,11 +23,11 @@ const navigation = [
   { name: 'Dashboard', href: '/panel/dashboard', icon: ChartBarIcon },
   { name: 'Tickets', href: '/panel/tickets', icon: TicketIcon },
   { name: 'Monitoring', href: '/panel/monitoring', icon: ComputerDesktopIcon },
-  { name: 'Users', href: '/panel/users', icon: UsersIcon },
   { name: 'Inventory', href: '/panel/inventory', icon: ArchiveBoxIcon },
-  { name: 'Logs', href: '/panel/logs', icon: DocumentTextIcon },
   { name: 'Projects', href: '/panel/projects', icon: FolderIcon },
+  { name: 'Users', href: '/panel/users', icon: UsersIcon },
   { name: 'Calendar', href: '/panel/calendar', icon: CalendarIcon },
+  { name: 'Logs', href: '/panel/logs', icon: DocumentTextIcon },
 ]
 
 export default function Sidebar() {

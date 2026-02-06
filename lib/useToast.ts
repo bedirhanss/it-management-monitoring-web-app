@@ -53,6 +53,18 @@ export function useToast() {
     return addToast('confirm', title, message, undefined, onConfirm, onCancel)
   }, [addToast])
 
+  const notification = useCallback((title: string, message?: string, duration?: number) => {
+    // Bildirim ayarlarını kontrol et
+    const settings = localStorage.getItem('notificationSettings')
+    if (settings) {
+      const parsed = JSON.parse(settings)
+      if (!parsed.enabled) {
+        return '' // Bildirimler kapalıysa gösterme
+      }
+    }
+    return addToast('notification', title, message, duration)
+  }, [addToast])
+
   return {
     toasts,
     addToast,
@@ -61,6 +73,7 @@ export function useToast() {
     error,
     warning,
     info,
-    confirm
+    confirm,
+    notification
   }
 }

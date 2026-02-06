@@ -6,6 +6,7 @@ import Modal, { ModalBody, ModalFooter } from '@/components/Modal'
 import ViewModal from '@/components/ViewModal'
 import SubHeader from '@/components/SubHeader'
 import { useToastContext } from '@/components/ToastProvider'
+import { SkeletonCard } from '@/components/Skeleton'
 
 export default function Calendar() {
   const toast = useToastContext()
@@ -338,6 +339,44 @@ export default function Calendar() {
   })
 
   const isViewingToday = viewingDate.toDateString() === new Date().toDateString()
+
+  if (loading) {
+    return (
+      <>
+        <SubHeader
+          title="Takvim"
+          description="Bakım planları ve etkinlikleri"
+          searchPlaceholder="Etkinlik ara..."
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          filterOptions={filterOptions}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          actionButton={{
+            label: 'Yeni Etkinlik',
+            icon: PlusIcon,
+            onClick: () => {}
+          }}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6 animate-shimmer"></div>
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: 35 }).map((_, i) => (
+                  <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-shimmer"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </div>
+      </>
+    )
+  }
 
   return (
     <>

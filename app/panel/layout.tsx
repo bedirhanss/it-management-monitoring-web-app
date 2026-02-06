@@ -6,6 +6,8 @@ import ThemeToggle from '@/components/SafeThemeToggle'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/lib/auth'
+import { useToastContext } from '@/components/ToastProvider'
+import { useEffect } from 'react'
 
 interface PanelLayoutProps {
   children: React.ReactNode
@@ -14,6 +16,29 @@ interface PanelLayoutProps {
 export default function PanelLayout({ children }: PanelLayoutProps) {
   const pathname = usePathname()
   const { logout } = useAuth()
+  const toast = useToastContext()
+
+  useEffect(() => {
+    const welcomeShown = sessionStorage.getItem('welcomeShown')
+    if (!welcomeShown) {
+      const timer = setTimeout(() => {
+        const fetchUser = async () => {
+          try {
+            const response = await fetch('/api/auth/me')
+            if (response.ok) {
+              const data = await response.json()
+              toast.notification(`Hoşgeldin ${data.user.name}`, 'Panele başarıyla giriş yaptınız')
+              sessionStorage.setItem('welcomeShown', 'true')
+            }
+          } catch (error) {
+            console.error('User fetch error:', error)
+          }
+        }
+        fetchUser()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   // Sayfa başlığını otomatik belirle
   const getPageTitle = () => {

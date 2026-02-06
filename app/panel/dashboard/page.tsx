@@ -227,14 +227,22 @@ export default function Dashboard() {
 
       {/* Recent activity */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-2">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Son Aktiviteler</h3>
-          <button
-            onClick={handleTestToasts}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            Toast Testi
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toast.notification('Yeni Bildirim', 'Sisteme yeni bir kullanıcı eklendi')}
+              className="px-4 py-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium rounded-lg transition-colors"
+            >
+              Bildirim Testi
+            </button>
+            <button
+              onClick={handleTestToasts}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Toast Testi
+            </button>
+          </div>
         </div>
         <div className="p-6">
           <div className="space-y-4">
