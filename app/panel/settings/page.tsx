@@ -140,13 +140,26 @@ export default function Settings() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Profil Bilgileri</h3>
-                <button
-                  onClick={() => editMode ? handleUpdateProfile() : setEditMode(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  {editMode ? 'Kaydet' : 'Düzenle'}
-                </button>
+                {user.email !== 'demo@company.com' && (
+                  <button
+                    onClick={() => editMode ? handleUpdateProfile() : setEditMode(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    {editMode ? 'Kaydet' : 'Düzenle'}
+                  </button>
+                )}
               </div>
+              
+              {user.email === 'demo@company.com' && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-center">
+                    <LockClosedIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      Demo hesabı düzenlenemez.
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

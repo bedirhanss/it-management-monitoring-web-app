@@ -16,7 +16,7 @@ import {
   FolderIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ThemeToggle from '@/components/SafeThemeToggle'
 
 const navigation = [
@@ -33,6 +33,32 @@ const navigation = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    fetchUser()
+  }, [])
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user)
+      }
+    } catch (error) {
+      console.error('User fetch error:', error)
+    }
+  }
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin': return 'Yönetici'
+      case 'technician': return 'Teknisyen'
+      case 'user': return 'Kullanıcı'
+      default: return role
+    }
+  }
 
   return (
     <>
@@ -93,8 +119,8 @@ export default function Sidebar() {
         <div className="border-t border-gray-200 dark:border-gray-700 p-4 mt-auto space-y-3">
           {/* User Info */}
           <div className="px-3 py-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Admin User</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Yönetici</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || 'Kullanıcı'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{user ? getRoleLabel(user.role) : ''}</p>
           </div>
           
           {/* Settings */}
