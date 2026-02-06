@@ -221,6 +221,38 @@ export async function GET(request: NextRequest) {
         fileName = 'sistem_loglari'
         break
 
+      case 'calendar_events':
+        const calendarResult = await pool.query(`
+          SELECT 
+            ce.id,
+            ce.title,
+            ce.description,
+            ce.event_type,
+            ce.event_date,
+            ce.start_time,
+            ce.end_time,
+            u.name as assigned_to_name,
+            ce.created_at::date as created
+          FROM calendar_events ce
+          LEFT JOIN users u ON ce.assigned_to = u.id
+          ORDER BY ce.event_date DESC
+        `)
+        data = calendarResult.rows
+        columns = [
+          { header: 'ID', key: 'id', width: 10 },
+          { header: 'Başlık', key: 'title', width: 30 },
+          { header: 'Açıklama', key: 'description', width: 40 },
+          { header: 'Tür', key: 'event_type', width: 15 },
+          { header: 'Tarih', key: 'event_date', width: 15 },
+          { header: 'Başlangıç', key: 'start_time', width: 12 },
+          { header: 'Bitiş', key: 'end_time', width: 12 },
+          { header: 'Sorumlu', key: 'assigned_to_name', width: 20 },
+          { header: 'Oluşturulma', key: 'created', width: 15 },
+        ]
+        sheetName = 'Takvim Etkinlikleri'
+        fileName = 'takvim_etkinlikleri'
+        break
+
       default:
         return NextResponse.json({ error: 'Invalid table' }, { status: 400 })
     }
