@@ -88,6 +88,14 @@ export default function Dashboard() {
     toast.info('Kaldırıldı', 'Widget dashboard\'dan kaldırıldı')
   }
 
+  const handleSelectAll = () => {
+    setSelectedWidgets(widgetRegistry.map(w => w.id))
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedWidgets([])
+  }
+
   return (
     <>
       <SubHeader
@@ -155,9 +163,17 @@ export default function Dashboard() {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Dashboard'unuzda görüntülemek istediğiniz widget'ları seçin
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Dashboard'unuzda görüntülemek istediğiniz widget'ları seçin
+            </p>
+            <button
+              onClick={selectedWidgets.length === widgetRegistry.length ? handleDeselectAll : handleSelectAll}
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            >
+              {selectedWidgets.length === widgetRegistry.length ? 'Tümünü Kaldır' : 'Tümünü Seç'}
+            </button>
+          </div>
 
           <div className="space-y-2">
             {widgetRegistry.map(widget => (
@@ -199,7 +215,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={handleSaveWidgets}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
             >
               Kaydet
             </button>
