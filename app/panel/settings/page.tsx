@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserIcon, CogIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { UserIcon, CogIcon, EyeIcon, EyeSlashIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useToastContext } from '@/components/ToastProvider'
 
 export default function Settings() {
@@ -204,7 +204,7 @@ export default function Settings() {
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-md font-medium text-gray-900 dark:text-white">Şifre Güncelleme</h4>
-                  {!passwordMode && (
+                  {!passwordMode && user.email !== 'demo@company.com' && (
                     <button
                       onClick={() => setPasswordMode(true)}
                       className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
@@ -214,7 +214,16 @@ export default function Settings() {
                   )}
                 </div>
 
-                {passwordMode && (
+                {user.email === 'demo@company.com' ? (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <LockClosedIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-2" />
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        Demo hesabı için şifre değiştirme devre dışıdır.
+                      </p>
+                    </div>
+                  </div>
+                ) : passwordMode ? (
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -310,7 +319,7 @@ export default function Settings() {
                       </button>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           )}

@@ -4,10 +4,10 @@ import jwt from 'jsonwebtoken'
 export async function POST() {
   try {
     const demoUser = {
-      id: 1,
-      name: 'Demo User',
-      email: 'user@company.com',
-      role: 'user'
+      id: 14,
+      name: 'Demo',
+      email: 'demo@company.com',
+      role: 'admin'
     }
 
     const token = jwt.sign(
