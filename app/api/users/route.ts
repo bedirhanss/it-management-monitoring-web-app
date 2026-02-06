@@ -120,6 +120,17 @@ export async function DELETE(request: Request) {
 
     const client = await pool.connect()
     const user = await client.query('SELECT name, email FROM users WHERE id = $1', [id])
+    
+    // İlişkili kayıtları temizle
+    await client.query('UPDATE tickets SET assigned_to = NULL WHERE assigned_to = $1', [id])
+    await client.query('UPDATE tickets SET created_by = NULL WHERE created_by = $1', [id])
+    await client.query('UPDATE projects SET assigned_to = NULL WHERE assigned_to = $1', [id])
+    await client.query('UPDATE projects SET created_by = NULL WHERE created_by = $1', [id])
+    await client.query('UPDATE calendar_events SET assigned_to = NULL WHERE assigned_to = $1', [id])
+    await client.query('UPDATE calendar_events SET created_by = NULL WHERE created_by = $1', [id])
+    await client.query('UPDATE inventory SET created_by = NULL WHERE created_by = $1', [id])
+    
+    // Kullanıcıyı sil
     await client.query('DELETE FROM users WHERE id = $1', [id])
     client.release()
 

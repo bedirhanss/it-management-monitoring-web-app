@@ -107,9 +107,9 @@ ADD COLUMN IF NOT EXISTS details TEXT;
 
 -- Insert sample data
 INSERT INTO users (name, email, password_hash, role) VALUES
-('Admin User', 'admin@company.com', '$2b$10$example', 'admin'),
-('Tech Support', 'tech@company.com', '$2b$10$example', 'technician'),
-('Regular User', 'user@company.com', '$2b$10$example', 'user')
+('Admin User', 'admin@company.com', '$2b$10$rZ5zKHZQJZxKxX5X5X5X5uK5X5X5X5X5X5X5X5X5X5X5X5X5X5X5X', 'admin'),
+('Tech Support', 'tech@company.com', '$2b$10$rZ5zKHZQJZxKxX5X5X5X5uK5X5X5X5X5X5X5X5X5X5X5X5X5X5X5X', 'technician'),
+('Regular User', 'user@company.com', '$2b$10$rZ5zKHZQJZxKxX5X5X5X5uK5X5X5X5X5X5X5X5X5X5X5X5X5X5X5X', 'user')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO servers (name, ip_address, status, cpu_usage, memory_usage, disk_usage) VALUES
