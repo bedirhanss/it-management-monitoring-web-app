@@ -171,7 +171,7 @@ export default function InventorySummary() {
       </div>
 
       {/* Kategori Dağılımı */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         {categoryStats.map((stat) => {
           const colors = colorClasses[stat.color as keyof typeof colorClasses]
           const Icon = stat.icon
