@@ -1,11 +1,91 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PlusIcon, EyeIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, EyeIcon, XMarkIcon, Bars3Icon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import SubHeader from '@/components/SubHeader'
 import { useToastContext } from '@/components/ToastProvider'
 import { widgetRegistry, type WidgetConfig } from '@/components/widgets'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+interface SortableWidgetProps {
+  widget: WidgetConfig
+  onRemove: (id: string) => void
+}
+
+function SortableWidget({ widget, onRemove }: SortableWidgetProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: widget.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  }
+
+  const WidgetComponent = widget.component
+  const colSpan = widget.gridSize === 'large' ? 'lg:col-span-2' : 'lg:col-span-1'
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${colSpan} relative group`}
+    >
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            title="Sürükle"
+          >
+            <Bars3Icon className="h-5 w-5" />
+          </button>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            {widget.title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+            Canlı
+          </span>
+          <button
+            onClick={() => onRemove(widget.id)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+            title="Widget'ı kaldır"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+      <WidgetComponent />
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -16,6 +96,13 @@ export default function Dashboard() {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const toast = useToastContext()
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   // LocalStorage'dan widget tercihlerini yükle
   useEffect(() => {
     const savedWidgets = localStorage.getItem('dashboard-widgets')
@@ -24,16 +111,27 @@ export default function Dashboard() {
         const parsed = JSON.parse(savedWidgets)
         setActiveWidgets(parsed)
       } catch (error) {
-        // Hata varsa default widget'ları kullan
         const defaultWidgets = widgetRegistry.filter(w => w.isDefault).map(w => w.id)
         setActiveWidgets(defaultWidgets)
       }
     } else {
-      // İlk kez açılıyorsa default widget'ları kullan
       const defaultWidgets = widgetRegistry.filter(w => w.isDefault).map(w => w.id)
       setActiveWidgets(defaultWidgets)
     }
   }, [])
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = activeWidgets.indexOf(active.id as string)
+      const newIndex = activeWidgets.indexOf(over.id as string)
+
+      const newOrder = arrayMove(activeWidgets, oldIndex, newIndex)
+      setActiveWidgets(newOrder)
+      localStorage.setItem('dashboard-widgets', JSON.stringify(newOrder))
+    }
+  }
 
   // Filtreleme
   const filteredWidgets = activeWidgets.filter(widgetId => {
@@ -62,7 +160,6 @@ export default function Dashboard() {
 
   const handleSaveWidgets = () => {
     setActiveWidgets(selectedWidgets)
-    // LocalStorage'a kaydet
     localStorage.setItem('dashboard-widgets', JSON.stringify(selectedWidgets))
     setIsModalOpen(false)
     toast.success('Başarılı', 'Widget ayarları kaydedildi')
@@ -115,38 +212,28 @@ export default function Dashboard() {
       />
 
       {/* Widget Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredWidgets.map(widgetId => {
-          const widget = widgetRegistry.find(w => w.id === widgetId)
-          if (!widget) return null
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={filteredWidgets} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
+            {filteredWidgets.map(widgetId => {
+              const widget = widgetRegistry.find(w => w.id === widgetId)
+              if (!widget) return null
 
-          const WidgetComponent = widget.component
-          const colSpan = widget.gridSize === 'large' ? 'lg:col-span-2' : 'lg:col-span-1'
-
-          return (
-            <div key={widget.id} className={`bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${colSpan} relative group`}>
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  {widget.title}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                    Canlı
-                  </span>
-                  <button
-                    onClick={() => handleRemoveWidget(widget.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                    title="Widget'ı kaldır"
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-              <WidgetComponent />
-            </div>
-          )
-        })}
-      </div>
+              return (
+                <SortableWidget
+                  key={widget.id}
+                  widget={widget}
+                  onRemove={handleRemoveWidget}
+                />
+              )
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {filteredWidgets.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
